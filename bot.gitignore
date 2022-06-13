@@ -1,0 +1,16 @@
+__pycache__/
+venv/
+.replit
+*.lock
+*.toml
+*.nix
+*.csv
+
+
+
+
+
+
+
+
+
