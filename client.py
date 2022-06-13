@@ -92,6 +92,7 @@ async def players(content, channel):
     player_1 = game.player_1
     player_2 = game.player_2
 
+    await channel.send(f'房間號碼：{game.room_num}')
     if player_1.first == '先手':
         await channel.send(f'先手玩家：{player_1.name}。後手玩家：{player_2.name}')
     else:
