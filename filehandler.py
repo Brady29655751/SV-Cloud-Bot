@@ -10,34 +10,51 @@ def read(path):
 
 def write(path, content, header=[]):
     if path.endswith('.csv'):
-        write_csv(path, content, header)
-        return
+        return write_csv(path, content, header)
 
-    write_file(path, content)
-    return
+    return write_file(path, content)
 
 def read_file(path):
     content = []
-    with open(path, 'r') as fh:
-        content.append(fh.readline())
+    try:
+        with open(path, 'r') as fh:
+            content.append(fh.readline())
+    except Exception:
+        content = []
     return content
 
 def write_file(path, content):
+    if not content:
+        return True
+    
     content_with_newline = [x + '\n' for x in content]
     content_with_newline[-1] = content[-1]
-    
-    with open(path, 'w') as fh:
-        fh.writelines(content_with_newline)
+    try:
+        with open(path, 'w') as fh:
+            fh.writelines(content_with_newline)
+    except Exception:
+        return False
+    return True
 
 def read_csv(path):
     content = []
-    with open(path, 'r', newline='') as fh:
-        content = csv.DictReader(fh)
+    try:
+        with open(path, 'r', newline='') as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                content.append(row)
+            
+    except Exception:
+        content = []
     return content
 
 def write_csv(path, content, header):
-    with open(path, 'w', newline='') as fh:
-        writer = csv.DictWriter(fh, header)
-        writer.writeheader()
-        for i in range(len(content)):
-            writer.writerow(content[i])
+    try:
+        with open(path, 'w', newline='') as fh:
+            writer = csv.DictWriter(fh, header)
+            writer.writeheader()
+            for i in range(len(content)):
+                writer.writerow(content[i])
+    except Exception:
+        return False
+    return True

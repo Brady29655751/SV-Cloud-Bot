@@ -56,8 +56,9 @@ async def game_quit(content, channel):
         channel_list = []
         for key, values in sv.running_games.items():
             channel_list.append(values.channel)
-        sv.running_games = {}
+        
         for game_channel in channel_list:
+            sv.delete_game(game_channel.id)
             await game_channel.send(f'**【系統公告】**\n為了減輕BOT負擔，管理員已刪除此頻道的對戰。')
         await channel.send(f'已刪除所有房間')
         return
@@ -66,10 +67,8 @@ async def game_quit(content, channel):
     if game == None:
         await channel.send(f'房間號碼不存在')
         return
-
-    game_channel_id = game.channel.id
-    game_channel = game.channel
-    del sv.running_games[game_channel_id]
+    
+    game_channel = sv.delete_game(game.channel.id)
     await channel.send(f'已刪除房間 {room_num}')
     await game_channel.send(f'**【系統公告】**\n為了減輕BOT負擔，管理員已刪除此頻道的對戰。')
 

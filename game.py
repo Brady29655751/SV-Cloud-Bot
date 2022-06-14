@@ -4,6 +4,7 @@ import datetime as dt
 import shutil
 import os
 
+import utility as utils
 import filehandler as fh
 
 #############
@@ -19,7 +20,9 @@ running_games = {}
 class Game:
     def __init__(self, channel, first, second):
         self.id = random.randrange(0, 30)
-        self.room_num = str(10000 + self.id * 3000 + random.randrange(1, 3000)) 
+        self.room_num = str(10000 + self.id * 3000 + random.randrange(1, 3000))
+        while is_room_exist(self.room_num):
+            self.room_num =  str(10000 + self.id * 3000 + random.randrange(1, 3000))
         self.channel = channel
         self.is_quitting = False
         self.player_1 = first
@@ -79,9 +82,9 @@ def get_player(channel_id, name):
 def get_player_from_file(room_num):
     global data_dir
 
-    def list_reader(deck):
-        cards = deck.replace('[', '').replace(']', '').replace(', ', ' ')
-        cards = cards.replace("'",'').split()
+    def deck_reader(deck):
+        cards = utils.list_reader(deck)
+        cards = utils.int_list_parser(cards)
         return cards
     
     path_player = os.path.join(data_dir, room_num, 'player.csv')
@@ -95,9 +98,10 @@ def get_player_from_file(room_num):
         player[i] = Player(int(content[i]['id']), content[i]['name'], int(content[i]['first']))
         player[i].has_kept = True if content[i]['has_kept'] == 'True' else False
         player[i].deck_pos = int(content[i]['deck_pos'])
-        player[i].deck = list_reader(content[i]['deck'])
+        player[i].deck = deck_reader(content[i]['deck'])
         for info in deck_effect[i]:
-            player[i].deck_effect[info['card']] = list_reader(info['effect'])
+            card = utils.int_parser(info['card'])
+            player[i].deck_effect[card] = deck_reader(info['effect'])
     return player
 
 def save_player_to_file(room_num, players):
@@ -174,10 +178,6 @@ def create_game(channel, player_1, player_2):
             return ('Error', '刪除閒置對戰時發生錯誤')
 
     game = Game(channel, player_1, player_2)
-    num = game.room_num
-    while is_room_exist(num):
-        game.room_num = str(10000 + game.id * 3000 + random.randrange(1, 3000))
-        num = game.room_num
     running_games[channel.id] = game
     save_running_games_to_file()
     save_game_to_file(game)
@@ -189,13 +189,13 @@ def create_game(channel, player_1, player_2):
 def get_game_from_file(room_num, bot):
     global data_dir, running_games
     path = os.path.join(data_dir, room_num, 'game.csv')
-    content = fh.read(path)
+    content = fh.read(path)[0]
     player = get_player_from_file(room_num)
-    game = create_game(bot.get_channel(int(content['channel_id'])), player[0], player[1])
+    game = Game(bot.get_channel(int(content['channel_id'])), player[0], player[1])
     game.id = int(content['id'])
     game.room_num = room_num
     game.is_quitting = True if content['is_quitting'] == 'True' else False
-    game.active_time = dt.strptime(content['active_time'], '%y/%m/%d %H:%M:%S')
+    game.active_time = dt.datetime.strptime(content['active_time'], '%Y/%m/%d %H:%M:%S')
     return game
 
 def save_game_to_file(game):
@@ -212,11 +212,11 @@ def save_game_to_file(game):
     subcontent['id'] = str(game.id)
     subcontent['channel_id'] = str(game.channel.id)
     subcontent['is_quitting'] = str(game.is_quitting)
-    subcontent['active_time'] = dt.strftime(game.active_time, '%y/%m/%d %H:%M:%S')
+    subcontent['active_time'] = game.active_time.strftime('%Y/%m/%d %H:%M:%S')
     content.append(subcontent)
 
     path = os.path.join(path, 'game.csv')
-    fh.write(path, content)
+    fh.write(path, content, header)
 
 def get_running_games_from_file(bot):
     global running_games, data_dir
@@ -265,10 +265,8 @@ def keep_cards(player, cards):
         player.has_kept = True
         return ('Correct', player.deck[0:3])
     
-    id_list = cards
-    try:
-        id_list = [int(x) for x in cards]
-    except Exception:
+    id_list = utils.int_list_parser(cards, error=True)
+    if not id_list:
         return ('Error', '卡片序號需為整數')
 
     new_deck = [i+1 for i in range(0, 40)]
@@ -290,12 +288,8 @@ def keep_cards(player, cards):
 
 # .draw name count
 def draw_from_deck(player, count=1):
-    try:
-        count = int(count)
-    except Exception:
-        return ('Error', '抽牌數量要正整數')
-    
-    if count <= 0:
+    count = utils.int_parser(count, True)
+    if (not count) or (count < 0):
         return ('Error', '抽牌數量要正整數')
 
     pos = player.deck_pos
@@ -313,21 +307,12 @@ def search_from_deck(player, count, cards):
         return ('Error', '檢索數量需寫"X張"，例如：8張')
     
     count = count.replace('張', '')
-    try:
-        count = int(count)
-    except Exception:
-        return ('Error', '檢索數量需寫"X張"，例如：8張')
+    count = utils.int_parser(count, error=True)
 
     if count <= 0:
         return ('Error', '檢索數量必須為正整數')
 
-    card_list = cards[:]
-    for i, card in enumerate(cards):
-        try:   
-            id = int(card)
-            card_list[i] = id
-        except Exception:
-            id = card
+    card_list = utils.int_list_parser(cards)
     
     filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
     result_list = random.sample(filt_list, min(len(filt_list), count))
@@ -347,13 +332,7 @@ def explore_from_deck(player, count=1):
 
 # .add name [cards]
 def add_deck(player, cards):
-    add_deck = cards[:]
-    for i, card in enumerate(cards):
-        try:
-            id = int(card)
-            add_deck[i] = id
-        except Exception:
-            id = card
+    add_deck = utils.int_list_parser(cards)
     
     old_deck = player.deck[0 : player.deck_pos]
     
@@ -367,14 +346,7 @@ def add_deck(player, cards):
 
 # .substitute name [cards]
 def substitute_deck(player, cards):
-    sub_deck = cards[:]
-    for i, card in enumerate(cards):
-        try:
-            id = int(card)
-            sub_deck[i] = id
-        except:
-            id = card
-    
+    sub_deck = utils.int_list_parser(cards)
     player.deck = sub_deck
     random.shuffle(player.deck)
     player.deck_pos = 0
@@ -382,13 +354,7 @@ def substitute_deck(player, cards):
 
 # .effect name mode effect [cards]
 def modify_deck_effect(player, mode, effect, cards):
-    card_list = cards[:]
-    for i, card in enumerate(cards):
-        try:
-            id = int(card)
-            card_list[i] = id
-        except:
-            id = card
+    card_list = utils.int_list_parser(cards)
     
     filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
     effect = effect + ' '
