@@ -74,6 +74,26 @@ async def check_player(content, channel):
         f'\t1號：{game.player_1.name}\n' +
         f'\t2號：{game.player_2.name}')
 
+async def game_save(content, channel):
+    msg = content.split()
+    if len(msg) != 4:
+        await channel.send(f'指令格式錯誤')
+        return
+
+    room_num = msg[3]
+    if room_num == 'all':
+        sv.save_all_games_to_file()
+        await channel.send(f'已儲存所有對戰數據。')
+        return
+
+    game = get_room(room_num)
+    if game == None:
+        await channel.send(f'房間號碼不存在')
+        return
+
+    game_channel = sv.save_game_to_file(game)
+    await channel.send(f'已儲存房號 {room_num} 的對戰數據。')
+
 async def game_quit(content, channel):
     msg = content.split()
     if len(msg) != 4:

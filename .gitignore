@@ -6,7 +6,7 @@ venv/
 *.toml
 *.nix
 
-data/
+running_games/
 card/
 
 

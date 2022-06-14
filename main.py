@@ -37,6 +37,7 @@ admin_command = {
     'count': admin.game_count,
     'active': admin.check_active_time,
     'player': admin.check_player,
+    'save': admin.game_save,
     'quit': admin.game_quit,
     'announce': admin.game_announce
 }

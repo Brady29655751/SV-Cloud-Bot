@@ -24,11 +24,10 @@ def read_file(path):
     return content
 
 def write_file(path, content):
-    if not content:
-        return True
-    
-    content_with_newline = [x + '\n' for x in content]
-    content_with_newline[-1] = content[-1]
+    content_with_newline = ['']
+    if content:
+        content_with_newline = [x + '\n' for x in content]
+        content_with_newline[-1] = content[-1]
     try:
         with open(path, 'w') as fh:
             fh.writelines(content_with_newline)

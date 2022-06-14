@@ -10,7 +10,7 @@ import filehandler as fh
 #############
 # global variable
 
-data_dir = os.path.join('.', 'data')
+data_dir = os.path.join('.', 'running_games')
 
 running_games = {}
 
@@ -165,7 +165,7 @@ def delete_game(channel_id):
     save_running_games_to_file()
     return deleted_channel
 
-def create_game(channel, player_1, player_2):
+def create_game(channel, player_1, player_2, mode='normal'):
     global running_games
     deleted_channel_id = None
     if is_game_playing(channel.id):
@@ -179,7 +179,7 @@ def create_game(channel, player_1, player_2):
         if not deleted_channel:
             return ('Error', '刪除閒置對戰時發生錯誤')
 
-    game = Game(channel, player_1, player_2)
+    game = Game(channel, player_1, player_2, mode)
     running_games[channel.id] = game
     save_running_games_to_file()
     save_game_to_file(game)
@@ -259,7 +259,7 @@ def save_all_games_to_file():
 # game functions
 
 # .battle name_1 name_2
-def init_game(channel, name_1, name_2):
+def init_game(channel, name_1, name_2, mode='normal'):
     global running_games
 
     first = random.randint(0,1)
@@ -267,7 +267,7 @@ def init_game(channel, name_1, name_2):
     player_1 = Player(1, name_1, first)
     player_2 = Player(2, name_2, 1 - first)
 
-    return create_game(channel, player_1, player_2)
+    return create_game(channel, player_1, player_2, mode)
 
 # .keep name [cards]
 def keep_cards(player, cards):
