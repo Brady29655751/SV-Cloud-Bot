@@ -3,6 +3,7 @@ from discord.ext import tasks, commands
 import datetime as dt
 
 import game as sv
+import cardmaster as cm
 
 #######
 # global
@@ -26,6 +27,7 @@ async def auto_save():
 
 def on_ready(bot):
     sv.get_running_games_from_file(bot)
+    cm.init_card_master()
     auto_save.start()
 
 ########

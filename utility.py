@@ -1,3 +1,5 @@
+def strip_quote(string):
+    return string.replace("'",'').replace('"','')
 
 def int_parser(string, error=False):
     num = string

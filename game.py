@@ -18,7 +18,7 @@ running_games = {}
 # utility
 
 class Game:
-    def __init__(self, channel, first, second):
+    def __init__(self, channel, first, second, mode='normal'):
         self.id = random.randrange(0, 30)
         self.room_num = str(10000 + self.id * 3000 + random.randrange(1, 3000))
         while is_room_exist(self.room_num):
@@ -29,6 +29,7 @@ class Game:
         self.player_2 = second
         self.active_time = dt.datetime.now() + dt.timedelta(hours=8)
         self.save_time = dt.datetime.now() + dt.timedelta(hours=8)
+        self.mode = mode
 
 class Player:
     def __init__(self, id, name, first):
@@ -195,6 +196,7 @@ def get_game_from_file(room_num, bot):
     game = Game(bot.get_channel(int(content['channel_id'])), player[0], player[1])
     game.id = int(content['id'])
     game.room_num = room_num
+    game.mode = content['mode']
     game.is_quitting = True if content['is_quitting'] == 'True' else False
     game.active_time = dt.datetime.strptime(content['active_time'], '%Y/%m/%d %H:%M:%S')
     game.save_time = dt.datetime.strptime(content['save_time'], '%Y/%m/%d %H:%M:%S')
@@ -210,10 +212,11 @@ def save_game_to_file(game):
         os.mkdir(path)
     
     save_player_to_file(room_num, [game.player_1, game.player_2])
-    header = ['id', 'channel_id', 'is_quitting', 'active_time', 'save_time']
+    header = ['id', 'mode', 'channel_id', 'is_quitting', 'active_time', 'save_time']
     content = []
     subcontent = {}
     subcontent['id'] = str(game.id)
+    subcontent['mode'] = game.mode
     subcontent['channel_id'] = str(game.channel.id)
     subcontent['is_quitting'] = str(game.is_quitting)
     subcontent['active_time'] = game.active_time.strftime('%Y/%m/%d %H:%M:%S')

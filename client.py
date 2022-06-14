@@ -353,7 +353,8 @@ async def modify_deck_effect(content, channel):
 async def save(content, channel):
     status = sv.save_game(channel.id)
     if status[0] == 'Correct':
-        await channel.send(f'已儲存對戰數據。')
+        await channel.send(f'已儲存對戰數據。\n' + 
+            f'\t儲存時間：{status[1].save_time.strftime("%Y/%m/%d %H:%M:%S")}')
     elif status[0] == 'Error':
         await channel.send(f'{status[1]}')
     else:
