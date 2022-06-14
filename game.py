@@ -265,6 +265,10 @@ def keep_cards(player, cards):
         player.has_kept = True
         return ('Correct', player.deck[0:3])
     
+    if cards[0] == 'all':
+        player.has_kept = True
+        return ('Correct', player.deck[0:3])
+    
     id_list = utils.int_list_parser(cards, error=True)
     if not id_list:
         return ('Error', '卡片序號需為整數')

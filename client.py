@@ -426,7 +426,9 @@ async def help(content, channel):
         elif msg[1] == 'keep':
             await channel.send('指令格式：.keep 玩家名字 卡片序號1 (卡片序號2) (卡片序號3)')
             await channel.send('指令範例：.keep 頭痛鯊 23 35')
-            await channel.send('指令說明：起手留牌。輸入的卡片序號是**【要保留的牌】**。卡片序號1若輸入none則會全換。')
+            await channel.send('指令說明：起手留牌。輸入的卡片序號是**【要保留的牌】**。\n' + 
+                '※ 卡片序號1若輸入none則會**【三張全換】**。\n' +
+                '※ 卡片序號1若輸入all則會**【全部保留】**。')
         elif msg[1] == 'draw':
             await channel.send('指令格式：.draw 玩家名字 (數量)')
             await channel.send('指令範例：.draw 頭痛鯊 2')
