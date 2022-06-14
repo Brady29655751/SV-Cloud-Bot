@@ -11,7 +11,9 @@ def int_parser(string, error=False):
             return False
     return num
 
-def int_list_parser(string_list, error=False):
+def int_list_parser(string_list, error=False, use_list_reader=False):
+    if use_list_reader:
+        string_list = list_reader(string_list)    
     result = [int_parser(x, error) for x in string_list]
     if error and (False in result):
         return False

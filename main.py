@@ -18,6 +18,7 @@ admin_id = os.environ['admin_id']
 
 client_command = {
     'battle': client.battle,
+    '2pick': client.battle,
     'dice': client.dice,
     'player': client.game_info,
     'deck': client.deck_info,

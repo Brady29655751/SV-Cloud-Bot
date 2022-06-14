@@ -3,6 +3,7 @@ import random
 import datetime as dt
 import game as sv
 
+
 ########
 # lazy functions
 
@@ -29,16 +30,24 @@ async def battle(content, channel):
         return
     await channel.send('バトル！シャドバース！')
     
-    status = sv.init_game(channel, players[1], players[2])
+    mode = 'normal'
+    if players[0].startswith('.2pick'):
+        mode = '2pick'
+
+    status = sv.init_game(channel, players[1], players[2], mode)
     if (status[0] == 'Correct') or (status[0] == 'Delete Old'):
         room_num = status[1][0].room_num
         player_1 = status[1][0].player_1
         player_2 = status[1][0].player_2
 
         await channel.send(f'對戰房號：{room_num}')
-        await channel.send(f'{player_1.name}：{player_1.first}。{player_2.name}：{player_2.first}。')
-        await channel.send(f'{player_1.name}的起手：{player_1.deck[0:3]}')
-        await channel.send(f'{player_2.name}的起手：{player_2.deck[0:3]}')
+        if mode == 'normal':
+            await channel.send(f'{player_1.name}：{player_1.first}。{player_2.name}：{player_2.first}。')
+            await channel.send(f'{player_1.name}的起手：{player_1.deck[0:3]}')
+            await channel.send(f'{player_2.name}的起手：{player_2.deck[0:3]}')
+        elif mode == '2pick':
+            await channel.send(f'{player_1.name} 請選擇職業：{status[2][0]}')
+            await channel.send(f'{player_2.name} 請選擇職業：{status[2][1]}')
 
         if status[0] == 'Delete Old':
             deleted_channel = status[1][1]
@@ -48,6 +57,7 @@ async def battle(content, channel):
         await channel.send(status[1])
     else:
         await channel.send('創建對戰時遇到未知錯誤')
+
 
 async def dice(content, channel):
     msg = content.replace('.dice', '')

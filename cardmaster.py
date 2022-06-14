@@ -5,7 +5,7 @@ import filehandler as fh
 
 card_master = {}
 card_master_by_name = {}
-card_master_by_craft = [{} for i in range(db.craft_count)]
+card_master_by_craft = [[] for i in range(db.craft_count)]
 card_dir = os.path.join('.', 'card')
 
 class Card:
@@ -17,14 +17,14 @@ class Card:
         self.craft = int(info['craft'])
         self.rarity = int(info['rarity'])
         self.type = int(info['type'])
-        self.trait = utils.int_list_parser(utils.list_reader(info['trait']))
+        self.trait = utils.int_list_parser(info['trait'], use_list_reader=True)
         self.cost = int(info['cost'])
         self.atk = int(info['atk'])
         self.life = int(info['life'])
         self.evo_atk = int(info['evo_atk'])
         self.evo_life = int(info['evo_life'])
-        self.effect = utils.strip_quote(info['effect'])
-        self.evo_effect = utils.strip_quote(info['evo_effect'])
+        self.effect = utils.list_reader(info['effect'])
+        self.evo_effect = utils.list_reader(info['evo_effect'])
     
     def get_status(self, cost=True, atk=True, life=True, evo_atk=False, evo_life=False):
         status = []
@@ -52,6 +52,7 @@ def init_card_master():
         card = Card(card_info)
         card_master[card.id] = card
         card_master_by_name[card.name] = card
+        card_master_by_craft[card.craft].append(card)
     return
 
 def search_by_name(name):

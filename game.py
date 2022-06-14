@@ -7,6 +7,8 @@ import os
 import utility as utils
 import filehandler as fh
 
+import twopick
+
 #############
 # global variable
 
@@ -41,6 +43,7 @@ class Player:
         self.deck_pos = 3
         self.deck = [i+1 for i in range(0, 40)]
         random.shuffle(self.deck)
+        self.data = {}
 
 def is_game_playing(channel_id):
     global running_games
@@ -267,7 +270,17 @@ def init_game(channel, name_1, name_2, mode='normal'):
     player_1 = Player(1, name_1, first)
     player_2 = Player(2, name_2, 1 - first)
 
-    return create_game(channel, player_1, player_2, mode)
+    status = create_game(channel, player_1, player_2, mode)
+    if status[0] == 'Error':
+        return status
+
+    game = status[1][0]
+    if mode == '2pick':
+        game.player_1.deck = []
+        game.player_2.deck = []
+        save_game_to_file(game)
+        status = (status[0], (status[1][0], status[1][1]), twopick.init_game())
+    return status
 
 # .keep name [cards]
 def keep_cards(player, cards):
