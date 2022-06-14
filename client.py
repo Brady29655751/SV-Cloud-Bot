@@ -6,9 +6,6 @@ import game as sv
 ########
 # lazy functions
 
-def on_ready(bot):
-    sv.get_running_games_from_file(bot)
-
 def is_game_playing(channel_id):
     return sv.is_game_playing(channel_id)
 
@@ -86,7 +83,7 @@ async def dice(content, channel):
     else:
         await channel.send(f'{times}d{dice}：{result}')
 
-async def players(content, channel):
+async def game_info(content, channel):
     if not is_game_playing(channel.id):
         await channel.send('該頻道沒有正在進行的雲對戰')
         return
@@ -95,6 +92,8 @@ async def players(content, channel):
     player_1 = game.player_1
     player_2 = game.player_2
 
+    last_save_time = game.save_time.strftime('%Y/%m/%d %H:%M:%S')
+    await channel.send(f'數據儲存時間：{last_save_time}')
     await channel.send(f'房間號碼：{game.room_num}')
     if player_1.first == '先手':
         await channel.send(f'先手玩家：{player_1.name}。後手玩家：{player_2.name}')
@@ -427,8 +426,8 @@ async def help(content, channel):
             await channel.send('指令格式：.keep 玩家名字 卡片序號1 (卡片序號2) (卡片序號3)')
             await channel.send('指令範例：.keep 頭痛鯊 23 35')
             await channel.send('指令說明：起手留牌。輸入的卡片序號是**【要保留的牌】**。\n' + 
-                '※ 卡片序號1若輸入none則會**【三張全換】**。\n' +
-                '※ 卡片序號1若輸入all則會**【全部保留】**。')
+                '\t※ 卡片序號1若輸入none則會**【三張全換】**。\n' +
+                '\t※ 卡片序號1若輸入all則會**【全部保留】**。')
         elif msg[1] == 'draw':
             await channel.send('指令格式：.draw 玩家名字 (數量)')
             await channel.send('指令範例：.draw 頭痛鯊 2')

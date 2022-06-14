@@ -28,6 +28,7 @@ class Game:
         self.player_1 = first
         self.player_2 = second
         self.active_time = dt.datetime.now() + dt.timedelta(hours=8)
+        self.save_time = dt.datetime.now() + dt.timedelta(hours=8)
 
 class Player:
     def __init__(self, id, name, first):
@@ -196,23 +197,27 @@ def get_game_from_file(room_num, bot):
     game.room_num = room_num
     game.is_quitting = True if content['is_quitting'] == 'True' else False
     game.active_time = dt.datetime.strptime(content['active_time'], '%Y/%m/%d %H:%M:%S')
+    game.save_time = dt.datetime.strptime(content['save_time'], '%Y/%m/%d %H:%M:%S')
     return game
 
 def save_game_to_file(game):
     global data_dir
+    game.save_time = dt.datetime.now() + dt.timedelta(hours=8)
+
     room_num = game.room_num
     path = os.path.join(data_dir, room_num)
     if not os.path.exists(path):
         os.mkdir(path)
     
     save_player_to_file(room_num, [game.player_1, game.player_2])
-    header = ['id', 'channel_id', 'is_quitting', 'active_time']
+    header = ['id', 'channel_id', 'is_quitting', 'active_time', 'save_time']
     content = []
     subcontent = {}
     subcontent['id'] = str(game.id)
     subcontent['channel_id'] = str(game.channel.id)
     subcontent['is_quitting'] = str(game.is_quitting)
     subcontent['active_time'] = game.active_time.strftime('%Y/%m/%d %H:%M:%S')
+    subcontent['save_time'] = game.save_time.strftime('%Y/%m/%d %H:%M:%S')
     content.append(subcontent)
 
     path = os.path.join(path, 'game.csv')
@@ -239,6 +244,13 @@ def save_running_games_to_file():
     for key, values in running_games.items():
         content.append(values.room_num)
     fh.write(path, content)
+
+def save_all_games_to_file():
+    global running_games
+    save_running_games_to_file()
+    for key, values in running_games.items():
+        save_game_to_file(values)
+    return
 
 ###########
 # game functions

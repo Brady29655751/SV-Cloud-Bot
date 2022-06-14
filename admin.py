@@ -1,7 +1,32 @@
 import discord
+from discord.ext import tasks, commands
 import datetime as dt
 
 import game as sv
+
+#######
+# global
+
+last_save_time = None
+
+#######
+# bot functions
+
+@tasks.loop(minutes=30)
+async def auto_save():
+    global last_save_time
+    if not auto_save.current_loop:
+        return
+    
+    sv.save_all_games_to_file()
+    last_save_time = dt.datetime.now() + dt.timedelta(hours=8)
+    last_save_time = last_save_time.strftime('%Y/%m/%d %H:%M:%S')
+    print(f'Auto saved at: {last_save_time}')
+    return
+
+def on_ready(bot):
+    sv.get_running_games_from_file(bot)
+    auto_save.start()
 
 ########
 # admin command
@@ -13,6 +38,8 @@ def get_room(room_num):
     return None    
 
 async def game_count(content, channel):
+    global last_save_time
+    await channel.send(f'上次自動儲存時間：{last_save_time}')
     await channel.send(f'正在運行的雲對戰數量：{len(sv.running_games)}')
     await channel.send(f'正在運行的雲對戰房間：{[values.room_num for key, values in sv.running_games.items()]}')
 

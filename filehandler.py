@@ -18,7 +18,7 @@ def read_file(path):
     content = []
     try:
         with open(path, 'r') as fh:
-            content.append(fh.readline())
+            content = fh.read().splitlines()
     except Exception:
         content = []
     return content

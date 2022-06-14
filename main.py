@@ -1,5 +1,6 @@
 import os
 import discord
+from discord.ext import tasks, commands
 import random
 import datetime as dt
 
@@ -18,7 +19,7 @@ admin_id = os.environ['admin_id']
 client_command = {
     'battle': client.battle,
     'dice': client.dice,
-    'player': client.players,
+    'player': client.game_info,
     'deck': client.deck_info,
     'keep': client.keep,
     'draw': client.draw,
@@ -46,8 +47,7 @@ bot = discord.Client()
 @bot.event
 async def on_ready():
     print('目前登入身分：', bot.user)
-    client.on_ready(bot)
-
+    admin.on_ready(bot)
 
 @bot.event
 async def on_message(message):
