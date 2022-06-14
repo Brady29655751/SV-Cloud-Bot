@@ -27,6 +27,7 @@ client_command = {
     'add': client.add,
     'substitute': client.substitute_deck,
     'effect': client.modify_deck_effect,
+    'save': client.save,
     'quit': client.quit,
     'help': client.help
 }
@@ -45,6 +46,7 @@ bot = discord.Client()
 @bot.event
 async def on_ready():
     print('目前登入身分：', bot.user)
+    client.on_ready(bot)
 
 
 @bot.event

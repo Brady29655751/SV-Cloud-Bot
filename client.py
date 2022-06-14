@@ -6,6 +6,9 @@ import game as sv
 ########
 # lazy functions
 
+def on_ready(bot):
+    sv.get_running_games_from_file(bot)
+
 def is_game_playing(channel_id):
     return sv.is_game_playing(channel_id)
 
@@ -347,7 +350,15 @@ async def modify_deck_effect(content, channel):
         await channel.send(f'{status[1]}')
     else:
         await channel.send('改變牌堆資訊時遇到未知錯誤')
-    
+
+async def save(content, channel):
+    status = sv.save_game(channel.id)
+    if status[0] == 'Correct':
+        await channel.send(f'已儲存對戰數據。')
+    elif status[0] == 'Error':
+        await channel.send(f'{status[1]}')
+    else:
+        await channel.send('改變牌堆資訊時遇到未知錯誤')
 
 async def quit(content, channel, bot=None):
     room_num = channel.id
@@ -389,7 +400,8 @@ async def help(content, channel):
             '9. add\n' +
             '10. substitute\n' +
             '11. effect\n' +
-            '12. quit')
+            '12. save\n' +
+            '13. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 玩家2名字')
@@ -443,6 +455,10 @@ async def help(content, channel):
             await channel.send('指令範例：.effect 頭痛鯊 add 增幅+1 R6')
             await channel.send('指令說明：為該玩家牌堆中的指定卡片新增/刪除/置換資訊。\n' +
                 '\t※ Ex: 上述指令會使頭痛鯊牌堆中的R6卡片新增【增幅+1】資訊。')
+        elif msg[1] == 'save':
+            await channel.send('指令格式：.save')
+            await channel.send('指令範例：.save')
+            await channel.send('指令說明：儲存該頻道正在進行的對戰數據，但不會記錄手牌資訊。')
         elif msg[1] == 'quit':
             await channel.send('指令格式：.quit')
             await channel.send('指令範例：.quit')

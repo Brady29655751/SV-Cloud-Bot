@@ -1,9 +1,15 @@
 import discord
 import random
 import datetime as dt
+import shutil
+import os
+
+import filehandler as fh
 
 #############
 # global variable
+
+data_dir = os.path.join('.', 'data')
 
 running_games = {}
 
@@ -12,8 +18,7 @@ running_games = {}
 
 class Game:
     def __init__(self, channel, first, second):
-        global running_games
-        self.id = len(running_games)
+        self.id = random.randrange(0, 30)
         self.room_num = str(10000 + self.id * 3000 + random.randrange(1, 3000)) 
         self.channel = channel
         self.is_quitting = False
@@ -34,10 +39,26 @@ class Player:
 
 def is_game_playing(channel_id):
     global running_games
-    playing =  channel_id in running_games
+    
+    playing = channel_id in running_games
     if playing:
         running_games[channel_id].active_time = dt.datetime.now() + dt.timedelta(hours=8)
     return playing
+
+def is_room_exist(room_num):
+    global data_dir
+    path = os.path.join(data_dir, room_num)
+    return os.path.exists(path)
+
+def is_room_ready(room_num):
+    global data_dir
+    if not is_room_exist(room_num):
+        return False 
+    path = os.path.join(data_dir, room_num)
+    game_exist = os.path.exists(os.path.join(path, 'game.csv'))
+    player_exist = os.path.exists(os.path.join(path, 'player.csv'))
+    deck_effect_exist = os.path.exists(os.path.join(path, 'deck_effect_1.csv')) and os.path.exists(os.path.join(path, 'deck_effect_2.csv'))
+    return game_exist and player_exist and deck_effect_exist
 
 def get_player(channel_id, name):
     global running_games
@@ -55,6 +76,170 @@ def get_player(channel_id, name):
     else:
         return None
 
+def get_player_from_file(room_num):
+    global data_dir
+
+    def list_reader(deck):
+        cards = deck.replace('[', '').replace(']', '').replace(', ', ' ')
+        cards = cards.replace("'",'').split()
+        return cards
+    
+    path_player = os.path.join(data_dir, room_num, 'player.csv')
+    path_deck_effect_1 = os.path.join(data_dir, room_num, 'deck_effect_1.csv')
+    path_deck_effect_2 = os.path.join(data_dir, room_num, 'deck_effect_2.csv')
+    
+    content = fh.read(path_player)
+    deck_effect = [fh.read(path_deck_effect_1), fh.read(path_deck_effect_2)]
+    player = [None, None]
+    for i in range(2):
+        player[i] = Player(int(content[i]['id']), content[i]['name'], int(content[i]['first']))
+        player[i].has_kept = True if content[i]['has_kept'] == 'True' else False
+        player[i].deck_pos = int(content[i]['deck_pos'])
+        player[i].deck = list_reader(content[i]['deck'])
+        for info in deck_effect[i]:
+            player[i].deck_effect[info['card']] = list_reader(info['effect'])
+    return player
+
+def save_player_to_file(room_num, players):
+    path_player = os.path.join(data_dir, room_num, 'player.csv')
+    path_deck_effect_1 = os.path.join(data_dir, room_num, 'deck_effect_1.csv')
+    path_deck_effect_2 = os.path.join(data_dir, room_num, 'deck_effect_2.csv')
+    path_deck_effect = [path_deck_effect_1, path_deck_effect_2]
+    
+    header = ['id', 'name', 'first', 'has_kept', 'deck_pos', 'deck']
+    content = []
+    for i in range(2):
+        subcontent = {}
+        player = players[i]
+        subcontent['id'] = str(player.id)
+        subcontent['name'] = player.name
+        subcontent['first'] = '0' if player.first == '先手' else '1'
+        subcontent['has_kept'] = str(player.has_kept)
+        subcontent['deck_pos'] = str(player.deck_pos)
+        subcontent['deck'] = str(player.deck)
+        content.append(subcontent)
+    fh.write(path_player, content, header)
+
+    header = ['card', 'effect']
+    for i in range(2):
+        content = []
+        for key, values in players[i].deck_effect.items():
+            subcontent = {}
+            subcontent['card'] = str(key)
+            subcontent['effect'] = str(values)
+            content.append(subcontent)
+        fh.write(path_deck_effect[i], content, header)
+
+def get_game(channel_id):
+    global running_games
+    if not is_game_playing(channel_id):
+        return None
+    return running_games[channel_id]
+
+def get_outdated_game():
+    global running_games
+    for key, values in running_games.items():
+        diff = dt.datetime.now() + dt.timedelta(hours=8) - values.active_time
+        if diff.days >= 3:
+            return values
+    return None
+
+def delete_game(channel_id):
+    global data_dir, running_games
+    game = get_game(channel_id)
+    if not game:
+        return None
+
+    deleted_channel = game.channel
+    path = os.path.join(data_dir, game.room_num)
+    del running_games[channel_id]
+    if os.path.exists(path):
+        shutil.rmtree(path, ignore_errors=True)
+
+    save_running_games_to_file()
+    return deleted_channel
+
+def create_game(channel, player_1, player_2):
+    global running_games
+    deleted_channel_id = None
+    if is_game_playing(channel.id):
+        return ('Error', '該頻道有其他正在進行的雲對戰')
+
+    if len(running_games) >= 30:
+        out = get_outdated_game()
+        if not out:
+            return ('Error', '有過多的雲對戰正在進行，請稍後再試')
+        deleted_channel = delete_game(out.channel.id)
+        if not deleted_channel:
+            return ('Error', '刪除閒置對戰時發生錯誤')
+
+    game = Game(channel, player_1, player_2)
+    num = game.room_num
+    while is_room_exist(num):
+        game.room_num = str(10000 + game.id * 3000 + random.randrange(1, 3000))
+        num = game.room_num
+    running_games[channel.id] = game
+    save_running_games_to_file()
+    save_game_to_file(game)
+    
+    if deleted_channel_id:
+        return ('Delete Old', (game, deleted_channel))
+    return ('Correct', (game, game.channel))
+
+def get_game_from_file(room_num, bot):
+    global data_dir, running_games
+    path = os.path.join(data_dir, room_num, 'game.csv')
+    content = fh.read(path)
+    player = get_player_from_file(room_num)
+    game = create_game(bot.get_channel(int(content['channel_id'])), player[0], player[1])
+    game.id = int(content['id'])
+    game.room_num = room_num
+    game.is_quitting = True if content['is_quitting'] == 'True' else False
+    game.active_time = dt.strptime(content['active_time'], '%y/%m/%d %H:%M:%S')
+    return game
+
+def save_game_to_file(game):
+    global data_dir
+    room_num = game.room_num
+    path = os.path.join(data_dir, room_num)
+    if not os.path.exists(path):
+        os.mkdir(path)
+    
+    save_player_to_file(room_num, [game.player_1, game.player_2])
+    header = ['id', 'channel_id', 'is_quitting', 'active_time']
+    content = []
+    subcontent = {}
+    subcontent['id'] = str(game.id)
+    subcontent['channel_id'] = str(game.channel.id)
+    subcontent['is_quitting'] = str(game.is_quitting)
+    subcontent['active_time'] = dt.strftime(game.active_time, '%y/%m/%d %H:%M:%S')
+    content.append(subcontent)
+
+    path = os.path.join(path, 'game.csv')
+    fh.write(path, content)
+
+def get_running_games_from_file(bot):
+    global running_games, data_dir
+    path = os.path.join(data_dir, 'running_games.txt')
+    content = fh.read(path)
+    flag = False
+    for room_num in content:
+        if is_room_ready(room_num):
+            game = get_game_from_file(room_num, bot)
+            running_games[game.channel.id] = game
+        else:
+            flag = True            
+    if flag:
+        save_running_games_to_file()
+
+def save_running_games_to_file():
+    global running_games, data_dir
+    path = os.path.join(data_dir, 'running_games.txt')
+    content = []
+    for key, values in running_games.items():
+        content.append(values.room_num)
+    fh.write(path, content)
+
 ###########
 # game functions
 
@@ -67,36 +252,7 @@ def init_game(channel, name_1, name_2):
     player_1 = Player(1, name_1, first)
     player_2 = Player(2, name_2, 1 - first)
 
-    game = None
-    id = len(running_games)
-    if id < 30:
-        if is_game_playing(channel.id):
-            return ('Error', '該頻道有其他正在進行的雲對戰')
-        
-        game = Game(channel, player_1, player_2)
-        running_games[channel.id] = game
-    else:
-        deleted_channel = None
-        deleted_room = None
-        for key, values in running_games.items():
-            diff = dt.datetime.now() - values.active_time
-            if diff.days >= 3:
-                deleted_channel = values.channel
-                deleted_room = (values.id, values.room_num)
-                break
-        
-        if (deleted_channel != None) and (deleted_room != None):
-            deleted_key = deleted_channel.id
-            del running_games[deleted_key]
-            game = Game(channel, player_1, player_2)
-            game.id = deleted_room[0]
-            game.room_num = deleted_room[1]
-            running_games[channel.id] = game
-            return ('Delete Old', (game, deleted_channel))
-        else:
-            return ('Error', '有過多的雲對戰正在進行，請稍後再試')
-
-    return ('Correct', (game, game.channel))
+    return create_game(channel, player_1, player_2)
 
 # .keep name [cards]
 def keep_cards(player, cards):
@@ -255,16 +411,23 @@ def modify_deck_effect(player, mode, effect, cards):
 
     return ('Correct', mode)
 
-# .quit
-def quit_game(room_num):
+def save_game(channel_id):
     global running_games
-
-    if not is_game_playing(room_num):
+    if not is_game_playing(channel_id):
         return ('Error', '該頻道沒有正在進行的雲對戰')
 
-    game = running_games[room_num]
-    game.player_1 = None
-    game.player_2 = None
-    game.is_quitting = False
-    del running_games[room_num]
-    return ('Correct', room_num)
+    save_game_to_file(running_games[channel_id])
+    return ('Correct', running_games[channel_id])
+
+# .quit
+def quit_game(channel_id):
+    global running_games
+
+    if not is_game_playing(channel_id):
+        return ('Error', '該頻道沒有正在進行的雲對戰')
+
+    channel = delete_game(channel_id)
+    if not channel:
+        return ('Error', '結束對戰時發生錯誤')
+
+    return ('Correct', channel)
