@@ -23,13 +23,14 @@ def get_card_effect(player, card_list):
 ########
 # client function. send message to channel.
 
-async def battle(content, channel):
+async def prepare_battle(content, channel):
     players = content.split()
-    if len(players) != 3:
+    if (len(players) != 3):
         await channel.send('對戰人數不是2位')
         return
+
     await channel.send('バトル！シャドバース！')
-    
+
     mode = 'normal'
     if players[0].startswith('.2pick'):
         mode = '2pick'
@@ -52,11 +53,56 @@ async def battle(content, channel):
         if status[0] == 'Delete Old':
             deleted_channel = status[1][1]
             await deleted_channel.send(f'**【系統公告】**\n' + '\t該對戰已閒置過久。系統自動刪除該頻道的對戰。')
-
     elif status[0] == 'Error':
         await channel.send(status[1])
     else:
         await channel.send('創建對戰時遇到未知錯誤')
+
+async def battle_cmd(content, channel, game):
+    msg = content.split()
+    if len(msg) != 2:
+        await channel.send('對戰指令格式錯誤')
+        return
+    cmd = msg[1]
+    mode = game.mode
+    player_1 = game.player_1
+    player_2 = game.player_2
+    if mode == 'normal':
+        await channel.send('該頻道有其他正在進行的雲對戰。')
+        return
+    elif mode == '2pick':
+        if cmd == 'ready':
+            first_deck_ready = len(player_1.deck) == 30
+            second_deck_ready = len(player_2.deck) == 30
+            deck_ready = first_deck_ready and second_deck_ready
+            is_init = player_1.deck_pos == 0 and player_2.deck_pos == 0
+            if deck_ready and is_init:
+                save_game_to_file(game)
+                await channel.send(f'房號：{game.room_num}')
+                await channel.send(f'{player_1.name}：{player_1.first}。' + 
+                    f'{player_2.name}：{player_2.first}。')
+                await channel.send('對戰開始。請雙方使用draw指令抽取3張卡片，並進行換牌。')
+                return
+            else:
+                if not is_init:
+                    await channel.send('2pick對戰已經開始，不可使用ready指令。')
+                    return
+                if not deck_ready:
+                    who = '雙方都'
+                    if first_deck_ready and (not second_deck_ready):
+                        who = f'{player_2.name}'
+                    elif (not first_deck_ready) and second_deck_ready:
+                        who = f'{player_1.name}'
+                    await channel.send(f'{who}尚未完成選牌。')
+                    return
+    return
+
+async def battle(content, channel):
+    game = sv.get_game(channel.id)
+    if not game:
+        await prepare_battle(content, channel)
+    else:
+        await battle_cmd(content, channel, game)
 
 
 async def dice(content, channel):
@@ -389,10 +435,11 @@ async def modify_deck_effect(content, channel):
 
 async def portal(content, channel):
     msg = content.split()
-    if len(msg) != 2:
+    if len(msg) < 2:
         await channel.send('查詢卡片格式錯誤')
         return
-    name = msg[1]
+
+    name = utils.concate_content_with_character(msg[1:], ' ')
     card = sv.portal(name)
     if not card:
         await channel.send('未發現該卡片')
@@ -407,7 +454,10 @@ async def portal(content, channel):
         card_info.append(f'```{card.evo_effect}```')
     else:
         card_info.append(f'```{card.effect}```')
+
     card_info.append(f'卡包：《{card.pack_name}》')
+    if not card.is_normal():
+        card_info.append(f'※這張卡片為特殊卡。')
     card_info = utils.concate_content_with_newline(card_info)
     await channel.send(f'{card_info}')
 
@@ -476,7 +526,7 @@ async def help(content, channel):
             await channel.send('指令格式：.2pick 玩家1名字 玩家2名字')
             await channel.send('指令範例：.2pick 頭痛鯊 資工鯊')
             await channel.send('指令說明：開啟一場兩人的雲對戰【2pick模式】。請搭配choose指令來選牌。\n' + 
-                '\t※ 注意：此功能仍在測試中。選牌期間BOT若有突發狀況或是進入維護狀態有可能導致數據損失。')
+                '\t※選完牌之後，輸入.2pick ready即可開始對戰。')
         elif msg[1] == 'dice':
             await channel.send('指令格式：.dice 次數d範圍')
             await channel.send('指令範例：.dice 2d6')
@@ -534,7 +584,7 @@ async def help(content, channel):
         elif msg[1] == 'portal':
             await channel.send('指令格式：.portal 要查詢的卡片')
             await channel.send('指令範例：.portal 水之妖精')
-            await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢BOT卡片資料庫裡有存放的卡片。')
+            await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢至《虛實境界》卡包。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

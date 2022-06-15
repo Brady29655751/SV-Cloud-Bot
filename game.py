@@ -274,6 +274,8 @@ def init_game(channel, name_1, name_2, mode='normal'):
 
     game = status[1][0]
     if mode == '2pick':
+        game.player_1.deck_pos = 0
+        game.player_2.deck_pos = 0
         game.player_1.deck = []
         game.player_2.deck = []
         save_game_to_file(game)

@@ -1,9 +1,13 @@
+def replace_dot(string):
+    return string.replace('·', '．').replace('‧', '．').replace('﹒', '．').replace('・','．').replace('•', '．')
+
 def strip_quote(string):
     return string.replace("'",'').replace('"','')
 
 def append_newline(string_list):
     if not string_list:
         return ['\n']
+
     new_list = [x + '\n' for x in string_list]
     new_list[-1] = string_list[-1]
     return new_list
@@ -11,6 +15,20 @@ def append_newline(string_list):
 def concate_content_with_newline(string_list):
     new_string = ''
     new_list = append_newline(string_list)
+    for x in new_list:
+        new_string += x
+    return new_string
+
+def append_char(string_list, character):
+    if not string_list:
+        return character
+    new_list = [x + character for x in string_list]
+    new_list[-1] = string_list[-1]
+    return new_list
+
+def concate_content_with_character(string_list, character):
+    new_string = ''
+    new_list = append_char(string_list, character)
     for x in new_list:
         new_string += x
     return new_string
