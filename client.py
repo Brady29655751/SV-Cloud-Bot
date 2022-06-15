@@ -2,7 +2,7 @@ import discord
 import random
 import datetime as dt
 import game as sv
-
+import utility as utils
 
 ########
 # lazy functions
@@ -160,6 +160,33 @@ async def keep(content, channel):
         await channel.send(status[1])
     else:
         await channel.send('留牌時遇到未知錯誤')
+
+async def choose(content, channel):
+    game = sv.get_game(channel.id)
+    if not game:
+        await channel.send('該頻道沒有正在進行的雲對戰')
+        return
+
+    msg = content.split()
+    if len(msg) < 3:
+        await channel.send('選擇格式錯誤')
+        return
+
+    name = msg[1]
+    choice = msg[2]
+    player = get_player(channel.id, name)
+    if player == None:
+        await channel.send('名字寫錯')
+        return
+    
+    status = sv.choose(channel.id, player, choice)
+    if status[0] == 'Correct':
+        await channel.send(status[1])
+    elif status[0] == 'Error':
+        await channel.send(status[1])
+    else:
+        await channel.send('選擇時遇到未知錯誤')
+
 
 async def draw(content, channel):
     if not is_game_playing(channel.id):
@@ -360,6 +387,30 @@ async def modify_deck_effect(content, channel):
     else:
         await channel.send('改變牌堆資訊時遇到未知錯誤')
 
+async def portal(content, channel):
+    msg = content.split()
+    if len(msg) != 2:
+        await channel.send('查詢卡片格式錯誤')
+        return
+    name = msg[1]
+    card = sv.portal(name)
+    if not card:
+        await channel.send('未發現該卡片')
+        return
+    
+    card_info = [card.name]
+    card_info.append(f'消費 {card.cost}｜{card.craft_name}｜{card.rarity_name}｜{card.type_name}｜{card.trait_name}')
+    if card.type == 1:
+        card_info.append(f'進化前（{card.atk} / {card.life}）')
+        card_info.append(f'```{card.effect}```')
+        card_info.append(f'進化後（{card.evo_atk} / {card.evo_life}）')
+        card_info.append(f'```{card.evo_effect}```')
+    else:
+        card_info.append(f'```{card.effect}```')
+    card_info.append(f'卡包：《{card.pack_name}》')
+    card_info = utils.concate_content_with_newline(card_info)
+    await channel.send(f'{card_info}')
+
 async def save(content, channel):
     status = sv.save_game(channel.id)
     if status[0] == 'Correct':
@@ -400,24 +451,32 @@ async def help(content, channel):
         await channel.send('請輸入 ".help 指令" 來查看各項指令用途！')
         await channel.send('目前的指令有：\n' +
             '1. battle\n' +
-            '2. dice\n' +
-            '3. player\n' +
-            '4. deck\n' +
-            '5. keep\n' +
-            '6. draw\n' +
-            '7. search\n' +
-            '8. explore\n' +
-            '9. add\n' +
-            '10. substitute\n' +
-            '11. effect\n' +
-            '12. save\n' +
-            '13. quit')
+            '2. 2pick\n' +
+            '3. portal\n' +
+            '4. dice\n' +
+            '5. player\n' +
+            '6. deck\n' +
+            '7. choose\n' +
+            '8. keep\n' +
+            '9. draw\n' +
+            '10. search\n' +
+            '11. explore\n' +
+            '12. add\n' +
+            '13. substitute\n' +
+            '14. effect\n' +
+            '15. save\n' +
+            '16. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 玩家2名字')
             await channel.send('指令範例：.battle 頭痛鯊 資工鯊')
             await channel.send('指令說明：開啟一場兩人的雲對戰。目前此Bot最多只能同時進行30場對戰。\n' + 
                 '\t※ 注意：Bot可能會因為突發狀況或維護需要而導致數據損失或遭到刪除。')
+        elif msg[1] == '2pick':
+            await channel.send('指令格式：.2pick 玩家1名字 玩家2名字')
+            await channel.send('指令範例：.2pick 頭痛鯊 資工鯊')
+            await channel.send('指令說明：開啟一場兩人的雲對戰【2pick模式】。請搭配choose指令來選牌。\n' + 
+                '\t※ 注意：此功能仍在測試中。選牌期間BOT若有突發狀況或是進入維護狀態有可能導致數據損失。')
         elif msg[1] == 'dice':
             await channel.send('指令格式：.dice 次數d範圍')
             await channel.send('指令範例：.dice 2d6')
@@ -433,6 +492,11 @@ async def help(content, channel):
                 '\tcount會查看該玩家牌堆中的卡片張數。\n' +
                 '\tshow會完整查看該玩家的牌堆。\n' +
                 '\tused會查看該玩家已抽取的卡片。')
+        elif msg[1] == 'choose':
+            await channel.send('指令格式：.choose 玩家名字 選擇')
+            await channel.send('指令範例：.choose 頭痛鯊 左')
+            await channel.send('指令說明：選擇對應的選項。\n' + 
+                '\t※ 此功能目前只適用於2pick模式選牌。')
         elif msg[1] == 'keep':
             await channel.send('指令格式：.keep 玩家名字 卡片序號1 (卡片序號2) (卡片序號3)')
             await channel.send('指令範例：.keep 頭痛鯊 23 35')
@@ -467,6 +531,10 @@ async def help(content, channel):
             await channel.send('指令範例：.effect 頭痛鯊 add 增幅+1 R6')
             await channel.send('指令說明：為該玩家牌堆中的指定卡片新增/刪除/置換資訊。\n' +
                 '\t※ Ex: 上述指令會使頭痛鯊牌堆中的R6卡片新增【增幅+1】資訊。')
+        elif msg[1] == 'portal':
+            await channel.send('指令格式：.portal 要查詢的卡片')
+            await channel.send('指令範例：.portal 水之妖精')
+            await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢BOT卡片資料庫裡有存放的卡片。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

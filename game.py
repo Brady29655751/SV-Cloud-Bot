@@ -6,7 +6,7 @@ import os
 
 import utility as utils
 import filehandler as fh
-
+import cardmaster as cm
 import twopick
 
 #############
@@ -263,8 +263,6 @@ def save_all_games_to_file():
 
 # .battle name_1 name_2
 def init_game(channel, name_1, name_2, mode='normal'):
-    global running_games
-
     first = random.randint(0,1)
 
     player_1 = Player(1, name_1, first)
@@ -279,7 +277,7 @@ def init_game(channel, name_1, name_2, mode='normal'):
         game.player_1.deck = []
         game.player_2.deck = []
         save_game_to_file(game)
-        status = (status[0], (status[1][0], status[1][1]), twopick.init_game())
+        status = (status[0], (status[1][0], status[1][1]), twopick.init_game(player_1, player_2))
     return status
 
 # .keep name [cards]
@@ -317,6 +315,39 @@ def keep_cards(player, cards):
     player.has_kept = True
 
     return ('Correct', player.deck[0:3])
+
+#.choose name which
+def choose(channel_id, player, choice):
+    game = get_game(channel_id)
+    if not game:
+        return ('Error', '該頻道沒有正在進行的雲對戰。')
+
+    item = f'{player.name} 已選擇 {choice}'
+    if game.mode == '2pick':
+        if '2pick_craft' not in player.data:
+            item_list = player.data['2pick_craft_list']
+            if choice not in item_list:
+                return ('Error', '指定的項目不在清單中。')
+            twopick.set_craft(player, choice)
+            new_pick = twopick.give_pick(player, 1)
+            item = f'{player.name} 第1輪：\n' + f'左：{new_pick[0]}\n' + f'右：{new_pick[1]}' 
+        elif ('2pick_左' in player.data) and ('2pick_右' in player.data):
+            item_list = ['左', '右']
+            if choice not in item_list:
+                return ('Error', '指定的項目不在清單中。')
+            pick = player.data['2pick_' + choice]
+            twopick.set_pick(player, pick)
+            count = len(player.deck)
+            if count < 30:
+                new_pick = twopick.give_pick(player, (count // 2) + 1)
+                item = f'{player.name} 第{player.data["2pick_turn"]}輪：\n' + f'左：{new_pick[0]}\n' + f'右：{new_pick[1]}' 
+            else:
+                del player.data['2pick_左']
+                del player.data['2pick_右']
+                item = f'{player.name} 選牌結束。'
+        else:
+            return ('Error', '已經過了選牌階段')
+    return ('Correct', item)
 
 # .draw name count
 def draw_from_deck(player, count=1):
@@ -389,7 +420,6 @@ def modify_deck_effect(player, mode, effect, cards):
     card_list = utils.int_list_parser(cards)
     
     filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
-    effect = effect + ' '
     if mode == 'add':
         for card in filt_list:
             if card in player.deck_effect:
@@ -408,6 +438,9 @@ def modify_deck_effect(player, mode, effect, cards):
         return ('Error', '改變牌堆資訊沒有此項模式')
 
     return ('Correct', mode)
+
+def portal(name):
+    return cm.search_by_name(name)
 
 def save_game(channel_id):
     global running_games

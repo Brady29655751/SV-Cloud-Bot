@@ -22,6 +22,7 @@ client_command = {
     'dice': client.dice,
     'player': client.game_info,
     'deck': client.deck_info,
+    'choose': client.choose,
     'keep': client.keep,
     'draw': client.draw,
     'search': client.search,
@@ -29,6 +30,7 @@ client_command = {
     'add': client.add,
     'substitute': client.substitute_deck,
     'effect': client.modify_deck_effect,
+    'portal': client.portal,
     'save': client.save,
     'quit': client.quit,
     'help': client.help

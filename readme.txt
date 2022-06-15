@@ -1,22 +1,25 @@
 #Features
 0. help 幫助
 1. battle 對戰開始
-2. dice 骰子
-3. player 查看對戰資訊
-4. deck 查看牌堆資訊
-5. keep 起手留牌
-6. draw 抽牌
-7. search 檢索
-8. explore 探索（查看牌堆頂部N張卡片）
-9. add 塞進牌堆
-10. substitute 置換牌堆
-11. effect 新增牌堆卡片資訊
-12. save 手動存檔
-13. quit 結束對戰
+2. 2pick 模式2pick
+3. portal 查詢卡片資料
+4. dice 骰子
+5. player 查看對戰資訊
+6. deck 查看牌堆資訊
+7. choose 選擇
+8. keep 起手留牌
+9. draw 抽牌
+10. search 檢索
+11. explore 探索（查看牌堆頂部N張卡片）
+12. add 塞進牌堆
+13. substitute 置換牌堆
+14. effect 新增牌堆卡片資訊
+15. save 手動存檔
+16. quit 結束對戰
 
 
 #TODO
-1. 2pick模式
+1. 2pick模式（僅完成一半）
     1 虹金/中立虹
     2 銅
     3 銀
