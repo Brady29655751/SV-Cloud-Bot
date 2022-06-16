@@ -439,12 +439,40 @@ async def portal(content, channel):
         await channel.send('查詢卡片格式錯誤')
         return
 
-    name = utils.concate_content_with_character(msg[1:], ' ')
-    card = sv.portal(name)
+    card = None
+    if msg[1] == 'random':
+        if len(msg) == 2:
+            card = sv.portal(1, 'random')    
+        else:
+            count = utils.int_parser(msg[2])
+            if count <= 0 or count > 20:
+                await channel.send('隨機數量需為1到20之間')
+                return
+            
+            card = sv.portal(count, 'random')
+    else:
+        name = utils.concate_content_with_character(msg[1:], ' ')
+        count = utils.int_parser(name, error=True)
+        if count > 100_000_000:
+            card = sv.portal(count, 'id')
+        else:
+            card = sv.portal(name)
+    
     if not card:
         await channel.send('未發現該卡片')
         return
     
+    if isinstance(card, list):
+        if msg[1] == 'random':
+            await channel.send(f'隨機結果：{card}')
+        else:
+            if len(card) > 20:
+                await channel.send('搜尋結果超過20張，建議縮小搜尋範圍。\n')
+                await channel.send(f'搜尋結果（僅顯示前20張）：\n{card[0:21]}')
+            else:
+                await channel.send(f'搜尋結果：\n{card}')
+        return
+
     card_info = [card.name]
     card_info.append(f'消費 {card.cost}｜{card.craft_name}｜{card.rarity_name}｜{card.type_name}｜{card.trait_name}')
     if card.type == 1:
@@ -460,6 +488,16 @@ async def portal(content, channel):
         card_info.append(f'※這張卡片為特殊卡。')
     card_info = utils.concate_content_with_newline(card_info)
     await channel.send(f'{card_info}')
+
+async def travel(content, channel):
+    msg = content.split()
+    if len(msg) == 1:
+        await portal('.portal random', channel)
+        return
+    else:
+        if msg[1] == 'all':
+            await portal('.portal random', channel)
+            return
 
 async def save(content, channel):
     status = sv.save_game(channel.id)
@@ -585,7 +623,8 @@ async def help(content, channel):
             await channel.send('指令格式：.portal 要查詢的卡片')
             await channel.send('指令範例：.portal 水之妖精')
             await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢至《虛實境界》卡包。\n' +
-                '\t※ 要查詢的卡片可填入卡片id，此時portal會依照該id搜尋對應卡片。')
+                '\t※ 要查詢的卡片可填入卡片id，此時portal會依照該id搜尋對應卡片。\n' + 
+                '\t※ 要查詢的卡片若填入random，則會指定數量隨機搜尋卡片。未填寫數量則默認為1。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

@@ -469,12 +469,11 @@ def modify_deck_effect(player, mode, effect, cards):
 
     return ('Correct', mode)
 
-def portal(name):
-    card_id = utils.int_parser(name, error=True)
-    if card_id:
-        return cm.search_card(card_id, 'id')
-    return cm.search_card(name)
-    
+def portal(name, option='name'):
+    return cm.search_card(name, option)
+
+def travel(condition):
+    return portal(condition, 'travel')
 
 def save_game(channel_id):
     global running_games

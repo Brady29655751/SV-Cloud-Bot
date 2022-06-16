@@ -1,9 +1,11 @@
 import os
+import random
 import database as db
 import utility as utils
 import filehandler as fh
 
-card_master = {}
+card_master=[]
+card_master_by_id = {}
 card_master_by_name = {}
 card_master_by_craft = [[] for i in range(db.craft_count)]
 card_dir = os.path.join('.', 'card')
@@ -91,7 +93,7 @@ class Card:
         return self.is_normal() and self.pack in pack_list
 
 def init_card_master():
-    global card_master, card_dir
+    global card_dir
     path = os.path.join(card_dir, 'card_master.csv')
     content = fh.read(path)
     for card_info in content:
@@ -100,7 +102,8 @@ def init_card_master():
             continue
         
         card = Card(card_info)
-        card_master[card.id] = card
+        card_master.append(card)
+        card_master_by_id[card.id] = card
         card_master_by_name[card.name] = card
         card_master_by_craft[card.craft].append(card)
     return
@@ -111,7 +114,30 @@ def search_card(name, option='name'):
         token = init_card_name(token)
         if token in card_master_by_name:
             return card_master_by_name[token]
+        else:
+            card_list = []
+            for key in card_master_by_name:
+                if token in key:
+                    card_list.append(key)
+                if len(card_list) > 20:
+                    break
+            
+            if len(card_list) == 1:
+                return card_master_by_name[card_list[0]]
+            
+            def sort_func(name):
+                return -(3 * (name == token) + 2 * (('．'+ token) in name) + ((token + '．') in name))
+            return sorted(card_list, key=sort_func)
     elif option == 'id':
-        if token in card_master:
-            return card_master[token]
+        if token in card_master_by_id:
+            return card_master_by_id[token]
+    elif option == 'random':
+        card_list = random.sample(card_master, token)
+        if len(card_list) == 1:
+            return card_list[0]
+        return [x.name for x in card_list]
+    elif option == 'travel':
+        if name == 'all':
+            return search_card(1, 'random')
+    
     return None
