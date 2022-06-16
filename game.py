@@ -470,7 +470,11 @@ def modify_deck_effect(player, mode, effect, cards):
     return ('Correct', mode)
 
 def portal(name):
-    return cm.search_by_name(name)
+    card_id = utils.int_parser(name, error=True)
+    if card_id:
+        return cm.search_card(card_id, 'id')
+    return cm.search_card(name)
+    
 
 def save_game(channel_id):
     global running_games

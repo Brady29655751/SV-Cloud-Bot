@@ -105,8 +105,13 @@ def init_card_master():
         card_master_by_craft[card.craft].append(card)
     return
 
-def search_by_name(name):
-    new_name = init_card_name(name)
-    if new_name in card_master_by_name:
-        return card_master_by_name[new_name]
+def search_card(name, option='name'):
+    token = name
+    if option == 'name':
+        token = init_card_name(token)
+        if token in card_master_by_name:
+            return card_master_by_name[token]
+    elif option == 'id':
+        if token in card_master:
+            return card_master[token]
     return None

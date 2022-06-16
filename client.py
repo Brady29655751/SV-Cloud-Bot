@@ -584,7 +584,8 @@ async def help(content, channel):
         elif msg[1] == 'portal':
             await channel.send('指令格式：.portal 要查詢的卡片')
             await channel.send('指令範例：.portal 水之妖精')
-            await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢至《虛實境界》卡包。')
+            await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢至《虛實境界》卡包。\n' +
+                '\t※ 要查詢的卡片可填入卡片id，此時portal會依照該id搜尋對應卡片。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')
