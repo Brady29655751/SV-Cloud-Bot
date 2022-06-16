@@ -472,9 +472,6 @@ def modify_deck_effect(player, mode, effect, cards):
 def portal(name, option='name'):
     return cm.search_card(name, option)
 
-def travel(condition):
-    return portal(condition, 'travel')
-
 def save_game(channel_id):
     global running_games
     if not is_game_playing(channel_id):

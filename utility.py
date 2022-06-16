@@ -27,6 +27,11 @@ def append_char(string_list, character):
     return new_list
 
 def concate_content_with_character(string_list, character):
+    if not string_list:
+        return ''
+    if len(string_list) == 1:
+        return string_list[0]
+        
     new_string = ''
     new_list = append_char(string_list, character)
     for x in new_list:

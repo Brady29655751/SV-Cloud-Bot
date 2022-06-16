@@ -32,6 +32,7 @@ client_command = {
     'effect': client.modify_deck_effect,
     'portal': client.portal,
     'travel': client.travel,
+    'filter': client.filter_portal,
     'save': client.save,
     'quit': client.quit,
     'help': client.help

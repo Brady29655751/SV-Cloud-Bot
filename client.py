@@ -4,6 +4,11 @@ import datetime as dt
 import game as sv
 import utility as utils
 
+#######
+# global
+
+filter_result = None
+
 ########
 # lazy functions
 
@@ -107,7 +112,7 @@ async def battle(content, channel):
 
 async def dice(content, channel):
     msg = content.replace('.dice', '')
-    msg = msg.split('d')
+    msg = msg.split('d') if 'd' in msg else msg.split('D')
     if len(msg) != 2:
         await channel.send('擲骰格式錯誤')
         return
@@ -450,6 +455,50 @@ async def portal(content, channel):
                 return
             
             card = sv.portal(count, 'random')
+    elif msg[1] == 'travel':
+        if len(msg) == 2:
+            card = sv.portal('all', 'travel')
+        else:
+            card = sv.portal(msg[2:], 'travel')
+    elif msg[1] == 'filter':
+        global filter_result
+        if len(msg) == 2:
+            await channel.send('需指定搜索條件。')
+        elif len(msg) == 3:
+            if msg[2] in ['back', 'next']:
+                if not filter_result:
+                    await channel.send('沒有超過50張卡的搜索紀錄。')
+                else:
+                    page = filter_result[0]
+                    if msg[2] == 'back':
+                        if page == 0:
+                            await channel.send('沒有上一頁了。')
+                            return
+                        else:
+                            page -= 1
+                    elif msg[2] == 'next':
+                        if filter_result[0] == (len(filter_result[1]) - 1) // 50:
+                            await channel.send('沒有下一頁了。')
+                            return
+                        else:
+                            page += 1
+                    filter_result[0] = page
+                    start = 50 * page 
+                    stop = min(50 * (page + 1), len(filter_result[1]))
+                    await channel.send(f'【第{page+1}頁】(總計 {len(filter_result[1])} 張)：\n{filter_result[1][start:stop]}')
+            else:
+                await channel.send('搜尋指令格式錯誤。')
+        else:
+            card = sv.portal(msg[2:], 'filter')
+            card_name = [x.name for x in card]
+            if len(card) <= 50:
+                await channel.send(f'符合條件的卡片如下，總共 {len(card_name)} 張：\n{card_name}')
+            else:
+                filter_result = [0, card_name]
+                await channel.send(f'符合條件的卡片總共 {len(card_name)} 張，僅顯示前50張。\n' + 
+                    '請使用.filter back或.filter next以查看上一頁/下一頁\n' +
+                    f'第1頁：\n{card_name[0:50]}')
+        return
     else:
         name = utils.concate_content_with_character(msg[1:], ' ')
         count = utils.int_parser(name, error=True)
@@ -492,12 +541,21 @@ async def portal(content, channel):
 async def travel(content, channel):
     msg = content.split()
     if len(msg) == 1:
-        await portal('.portal random', channel)
+        await portal('.portal travel', channel)
         return
     else:
         if msg[1] == 'all':
-            await portal('.portal random', channel)
-            return
+            await portal('.portal travel', channel)
+        else:
+            target = utils.concate_content_with_character(msg[1:], ' ')
+            await portal('.portal travel ' + target, channel)
+        return
+
+async def filter_portal(content, channel):
+    msg = content.split()
+    target = utils.concate_content_with_character(msg[1:], ' ')
+    await portal('.portal filter ' + target, channel)
+    return
 
 async def save(content, channel):
     status = sv.save_game(channel.id)
@@ -541,19 +599,21 @@ async def help(content, channel):
             '1. battle\n' +
             '2. 2pick\n' +
             '3. portal\n' +
-            '4. dice\n' +
-            '5. player\n' +
-            '6. deck\n' +
-            '7. choose\n' +
-            '8. keep\n' +
-            '9. draw\n' +
-            '10. search\n' +
-            '11. explore\n' +
-            '12. add\n' +
-            '13. substitute\n' +
-            '14. effect\n' +
-            '15. save\n' +
-            '16. quit')
+            '4. travel\n' +
+            '5. filter\n' +
+            '6. dice\n' +
+            '7. player\n' +
+            '8. deck\n' +
+            '9. choose\n' +
+            '10. keep\n' +
+            '11. draw\n' +
+            '12. search\n' +
+            '13. explore\n' +
+            '14. add\n' +
+            '15. substitute\n' +
+            '16. effect\n' +
+            '17. save\n' +
+            '18. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 玩家2名字')
@@ -624,7 +684,25 @@ async def help(content, channel):
             await channel.send('指令範例：.portal 水之妖精')
             await channel.send('指令說明：顯示該卡片的詳細資訊。目前只能查詢至《虛實境界》卡包。\n' +
                 '\t※ 要查詢的卡片可填入卡片id，此時portal會依照該id搜尋對應卡片。\n' + 
-                '\t※ 要查詢的卡片若填入random，則會指定數量隨機搜尋卡片。未填寫數量則默認為1。')
+                '\t※ 要查詢的卡片若填入random，則會指定數量隨機搜尋卡片。未填寫數量則默認為1。\n' + 
+                '\t※ 要查詢的卡片若填入travel，則會將此指令視作travel指令。\n' +
+                '\t※ 要查詢的卡片若填入filter，則會將此指令視作filter指令。')
+        elif msg[1] == 'travel':
+            await channel.send('指令格式：.travel (條件式1) and/or (條件式2) and/or ...')
+            await channel.send('指令範例：.travel cost > 3 and type = 從者')
+            await channel.send('指令說明：漫遊。從官方卡片以外的卡片資料庫中，隨機搜尋1張符合指定條件的卡片。\n' +
+                '\t※ 條件式格式：標籤 大於/小於/等於 目標。中間需要空格。\n' + 
+                '\t※ 標籤：id, name, pack, class, rarity, type, trait, cost, atk, life, evoAtk, evoLife, \n' +
+                '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
+                '\t※ 若不填入任何條件，則默認全部隨機。')
+        elif msg[1] == 'filter':
+            await channel.send('指令格式：.filter (條件式1) and/or (條件式2) and/or ...')
+            await channel.send('指令範例：.filter cost > 3 and type = 從者')
+            await channel.send('指令說明：從卡片資料庫中搜索所有符合指定條件的卡片。\n' +
+                '\t※ 條件式格式：標籤 大於/小於/等於 目標。中間需要空格。\n' + 
+                '\t※ 標籤：id, name, pack, class, rarity, type, trait, cost, atk, life, evoAtk, evoLife, \n' +
+                '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
+                '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')    
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

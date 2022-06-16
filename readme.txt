@@ -3,19 +3,21 @@
 1. battle 對戰開始
 2. 2pick 模式2pick
 3. portal 查詢卡片資料
-4. dice 骰子
-5. player 查看對戰資訊
-6. deck 查看牌堆資訊
-7. choose 選擇
-8. keep 起手留牌
-9. draw 抽牌
-10. search 檢索
-11. explore 探索（查看牌堆頂部N張卡片）
-12. add 塞進牌堆
-13. substitute 置換牌堆
-14. effect 新增牌堆卡片資訊
-15. save 手動存檔
-16. quit 結束對戰
+4. travel 漫遊（由符合指定條件的卡片之中隨機顯示1張）
+5. filter 過濾（搜尋所有符合指定條件的卡片）
+6. dice 骰子
+7. player 查看對戰資訊
+8. deck 查看牌堆資訊
+9. choose 選擇
+10. keep 起手留牌
+11. draw 抽牌
+12. search 檢索
+13. explore 探索（查看牌堆頂部N張卡片）
+14. add 塞進牌堆
+15. substitute 置換牌堆
+16. effect 修改牌堆卡片資訊
+17. save 手動存檔
+18. quit 結束對戰
 
 
 #TODO

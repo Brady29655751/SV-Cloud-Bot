@@ -5,6 +5,9 @@ import utility as utils
 import filehandler as fh
 
 card_master=[]
+card_master_normal = []
+card_master_token = []
+card_master_travel = []
 card_master_by_id = {}
 card_master_by_name = {}
 card_master_by_craft = [[] for i in range(db.craft_count)]
@@ -31,6 +34,7 @@ def init_card_effect(effect):
 class Card:
     def __init__(self, info):
         self.info = info
+        self.info['name'] = init_card_name(self.info['name'])
         try:
             self.id = int(info['id'])
             self.name = init_card_name(info['name'])
@@ -46,6 +50,8 @@ class Card:
             self.trait_name = db.trait_name[self.trait[0]]
             for trait_num in self.trait[1:]:
                 self.trait_name += f'．{db.trait_name[trait_num]}'
+            self.ability = init_card_trait(info['ability'])
+            self.ability_name = [db.ability_name[x] for x in self.ability]
             self.cost = int(info['cost'])
             self.atk = int(info['atk'])
             self.life = int(info['life'])
@@ -53,6 +59,7 @@ class Card:
             self.evo_life = int(info['evoLife'])
             self.effect = init_card_effect(info['effect'])
             self.evo_effect = init_card_effect(info['evoEffect'])
+            self.token_id = init_card_trait(info['token id'])
         except Exception:
             print(self.id)
     
@@ -70,12 +77,15 @@ class Card:
             status.append(self.evo_life)
         return status
 
-    def is_normal(self):
-        return ((self.id // 100_000_000) == 1)
+    def is_normal(self, cygames=True):
+        return ((self.id // 100_000_000) == 1) and ((self.pack != 1) or cygames)
+
+    def is_token(self, cygames=True):
+        return ((self.id // 100_000_000) == 9) and ((self.pack != 1) or cygames)
     
     def is_in_rotation(self):
         count = db.pack_count
-        return self.is_normal() and ((self.pack == 0) or ((self.pack not in range(1,4)) and (self.pack in range(count - 5, count))))
+        return ((self.pack == 0) or ((self.pack not in range(1,4)) and (self.pack in range(count - 5, count))))
 
     def is_in_2pick(self, pack_list=[(db.pack_count - 4 + i) for i in range(4)]):
         if self.pack == 0:
@@ -106,6 +116,12 @@ def init_card_master():
         card_master_by_id[card.id] = card
         card_master_by_name[card.name] = card
         card_master_by_craft[card.craft].append(card)
+        if card.is_normal():
+            card_master_normal.append(card)
+            if card.pack != 1:
+                card_master_travel.append(card)
+        elif card.is_token():
+            card_master_token.append(card)
     return
 
 def search_card(name, option='name'):
@@ -136,8 +152,130 @@ def search_card(name, option='name'):
         if len(card_list) == 1:
             return card_list[0]
         return [x.name for x in card_list]
-    elif option == 'travel':
-        if name == 'all':
-            return search_card(1, 'random')
-    
+    elif option in ['travel', 'filter']:
+        if option == 'filter' and token == 'all':
+            return random.choice(card_master_travel)
+        else:
+            length = len(token)
+            card_list = card_master_normal if option == 'filter' else card_master_travel
+            for idx in range(0, length, 4):
+                if (token[idx] == 'mode') and (idx + 2 < length):
+                    mode = token[idx + 2]
+                    if mode == 'with_token':
+                        card_list = list(set(card_master_token) | set(card_list))
+                    elif mode == 'token_only':
+                        card_list = card_master_token
+
+            for idx in range(0, length, 4):
+                if (token[idx] == 'mode') and (idx + 2 < length):
+                    mode = token[idx + 2]
+                    if mode in ['rotation', 'rot', 'r', 'R', '指定', '指定系列']:
+                        card_list = [x for x in card_list if x.is_in_rotation()]
+                    elif mode in ['2pick', '2p']:
+                        card_list = [x for x in card_list if x.is_in_2pick()]
+
+            filt_list = set()
+            if option == 'travel' and length == 1:
+                filt_list = set(filt_card(card_list, 'effect', '=', token[0]))
+            elif length % 4 == 3:
+                filt_list = set(filt_card(card_list, token[0], token[1], token[2]))
+                
+                for cur in range(3, length, 4):
+                    operator = token[cur]
+                    new_list = set(filt_card(card_list, token[cur + 1], token[cur + 2], token[cur + 3]))
+                    if operator == 'and':
+                        filt_list = filt_list & new_list
+                    elif operator == 'or':
+                        filt_list = filt_list | new_list
+                    else:
+                        return None
+
+            filt_list = list(filt_list)
+            if filt_list:
+                if option == 'travel':
+                    return random.choice(filt_list)
+                elif option == 'filter':
+                    filt_list.sort(key=lambda x: x.pack * 10 + x.craft)
+            return filt_list
     return None
+
+def filt_card(card_list, label, compare, target):
+    label_list = [
+        'id', 'name', 'pack', 'class', 'rarity', 'type',
+        'trait', 'cost', 'atk', 'life', 'evoAtk', 'evoLife',
+        'countdown', 'ability', 'effect', 'evoEffect',
+        'author', 'token_id', 'image_url'
+    ]
+    if label == 'mode':
+        return card_list
+    
+    if label not in label_list:
+        return []
+    
+    label = utils.concate_content_with_character(label.split('_'), ' ')
+    if label == 'name':
+        target = init_card_name(target)
+    elif label == 'trait':
+        if compare == '!=':
+            return [x for x in card_list if target not in x.trait_name]
+        return [x for x in card_list if target in x.trait_name]
+    elif label == 'ability':
+        if compare == '!=':
+            return [x for x in card_list if target not in x.ability_name]
+        return [x for x in card_list if target in x.ability_name]
+    elif label == 'effect':
+        return [x for x in card_list if ((target in x.effect) or (target in x.evo_effect))]
+    elif label == 'token id':
+        card_id = utils.int_parser(target, error=True)
+        if card_id:
+            return [x for x in card_list if target[0].id in x.token_id]
+
+        card_list = list(set(card_list) | set(card_master_token))
+        target = filt_card(card_list, 'name', '=', target)
+
+        if target:
+            if compare == '!=':
+                return [x for x in card_list if target[0].id not in x.token_id]
+            return [x for x in card_list if target[0].id in x.token_id]
+    elif label == 'pack':
+        if target in db.pack_name:
+            target = str(db.pack_name.index(target))
+    elif label == 'class':
+        if target in db.craft_name:
+            target = str(db.craft_name.index(target))
+    elif label == 'rarity':
+        if target in db.rarity_name:
+            target = str(db.rarity_name.index(target) + 1)
+    elif label == 'type':   
+        if target in db.type_name:
+            target = str(db.type_name.index(target) + 1)   
+    elif label == 'countdown':
+        card_list = filt_card(card_list, 'type', '=', '護符')
+    elif label in ['atk', 'life', 'evoAtk', 'evoLife']:
+        card_list = filt_card(card_list, 'type', '=', '從者')
+
+    non_numbered_labels = ['name', 'trait', 'ability', 'effect', 'evoEffect', 'author', 'image_url']
+    target_int = utils.int_parser(target, error=True)
+    if label not in non_numbered_labels and isinstance(target_int, bool) and not target_int:
+        return []
+
+    filt_func = lambda x: False
+    if compare == '=':
+        filt_func = lambda x: (x.info[label] == target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) == utils.int_parser(target))
+    elif compare == '>':
+        filt_func = lambda x: (x.info[label] > target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) > utils.int_parser(target))
+    elif compare == '<':
+        filt_func = lambda x: (x.info[label] < target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) < utils.int_parser(target))
+    elif compare == '>=':
+        filt_func = lambda x: (x.info[label] >= target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) >= utils.int_parser(target))
+    elif compare == '<=':
+        filt_func = lambda x: (x.info[label] <= target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) <= utils.int_parser(target))
+    elif compare == '!=':
+        filt_func = lambda x: (x.info[label] != target) if label in non_numbered_labels \
+            else (utils.int_parser(x.info[label]) != utils.int_parser(target))
+    return [x for x in card_list if filt_func(x)]
