@@ -93,10 +93,12 @@ def get_player_from_file(room_num):
         return cards
     
     path_player = os.path.join(data_dir, room_num, 'player.csv')
+    path_2pick = os.path.join(data_dir, room_num, '2pick.csv')
     path_deck_effect_1 = os.path.join(data_dir, room_num, 'deck_effect_1.csv')
     path_deck_effect_2 = os.path.join(data_dir, room_num, 'deck_effect_2.csv')
     
     content = fh.read(path_player)
+    data_2pick = fh.read(path_2pick)
     deck_effect = [fh.read(path_deck_effect_1), fh.read(path_deck_effect_2)]
     player = [None, None]
     for i in range(2):
@@ -107,10 +109,24 @@ def get_player_from_file(room_num):
         for info in deck_effect[i]:
             card = utils.int_parser(info['card'])
             player[i].deck_effect[card] = deck_reader(info['effect'])
+    
+    for i in range(2):
+        id_2pick = int(data_2pick[i]['id'])
+        for p in player:
+            if p.id == id_2pick:
+                check_list = {}
+                check_list['craft_list'] = (utils.list_reader(data_2pick[i]['craft_list']))
+                check_list['craft'] = utils.int_parser(data_2pick[i]['craft'].replace('[', '').replace(']',''))
+                check_list['左'] = (utils.list_reader(data_2pick[i]['左']))
+                check_list['右'] = (utils.list_reader(data_2pick[i]['右']))
+                for key, values in check_list.items():
+                    if values:
+                        p.data['2pick_' + key] = values
     return player
 
 def save_player_to_file(room_num, players):
     path_player = os.path.join(data_dir, room_num, 'player.csv')
+    path_2pick = os.path.join(data_dir, room_num, '2pick.csv')
     path_deck_effect_1 = os.path.join(data_dir, room_num, 'deck_effect_1.csv')
     path_deck_effect_2 = os.path.join(data_dir, room_num, 'deck_effect_2.csv')
     path_deck_effect = [path_deck_effect_1, path_deck_effect_2]
@@ -138,6 +154,17 @@ def save_player_to_file(room_num, players):
             subcontent['effect'] = str(values)
             content.append(subcontent)
         fh.write(path_deck_effect[i], content, header)
+
+    header = ['id', 'craft_list', 'craft', '左', '右']
+    content = []
+    for i in range(2):
+        subcontent = {}
+        player = players[i]
+        subcontent['id'] = str(player.id)
+        for x in header[1:]:
+            subcontent[x] = str(player.data['2pick_' + x]) if ('2pick_' + x) in player.data else []
+        content.append(subcontent)
+    fh.write(path_2pick, content, header)
 
 def get_game(channel_id):
     global running_games
@@ -278,8 +305,8 @@ def init_game(channel, name_1, name_2, mode='normal'):
         game.player_2.deck_pos = 0
         game.player_1.deck = []
         game.player_2.deck = []
-        save_game_to_file(game)
         status = (status[0], (status[1][0], status[1][1]), twopick.init_game(player_1, player_2))
+        save_game_to_file(game)
     return status
 
 # .keep name [cards]
@@ -349,6 +376,7 @@ def choose(channel_id, player, choice):
                 item = f'{player.name} 選牌結束。'
         else:
             return ('Error', '已經過了選牌階段')
+        save_game_to_file(game)
     return ('Correct', item)
 
 # .draw name count

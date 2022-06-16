@@ -39,7 +39,7 @@ def int_parser(string, error=False):
         num = int(string)
     except Exception:
         num = string
-        if error:
+        if error or not string:
             return False
     return num
 

@@ -24,6 +24,9 @@ def give_pick(player, turn):
     silver = [3, 6, 12, 14]
     neutral = [5, 10]
 
+    if turn > 15:
+        return
+
     craft = player.data['2pick_craft']
     pick_list = []
     if turn in legend:
@@ -48,6 +51,8 @@ def give_pick(player, turn):
 
 def set_pick(player, pick):
     count = len(player.deck)
+    if (count >= 30) or (not pick[0]) or (not pick[1]):
+        return
     sv.add_deck(player, [count+1, count+2])
     sv.modify_deck_effect(player, 'add', pick[0], [count+1])
     sv.modify_deck_effect(player, 'add', pick[1], [count+2])
