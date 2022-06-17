@@ -17,6 +17,8 @@ admin_id = os.environ['admin_id']
 # commands
 
 client_command = {
+    'me': client.repeat_after_me,
+
     'battle': client.battle,
     '2pick': client.battle,
     'dice': client.dice,
@@ -81,6 +83,8 @@ async def on_message(message):
         if content.startswith('.' + key):
             await values(content, channel)
             return
+    
+    await client.idle(content, channel)
 
 keep_alive.keep_alive()
 bot.run(bot_token)

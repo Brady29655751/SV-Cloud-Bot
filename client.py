@@ -8,6 +8,7 @@ import utility as utils
 # global
 
 filter_result = None
+repeat_message = [0, None]
 
 ########
 # lazy functions
@@ -27,6 +28,25 @@ def get_card_effect(player, card_list):
 
 ########
 # client function. send message to channel.
+
+async def idle(content, channel):
+    await repeat(content, channel)
+
+async def repeat(content, channel):
+    global repeat_message
+    msg = content
+    if repeat_message[1] != msg:
+        repeat_message = [1, msg]
+    else:
+        repeat_message[0] += 1
+        if repeat_message[0] == 3:
+            await channel.send(msg)
+            return
+
+async def repeat_after_me(content, channel):
+    msg = content.strip('.me ')
+    await channel.send(msg)
+    return
 
 async def prepare_battle(content, channel):
     players = content.split()
