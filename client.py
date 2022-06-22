@@ -44,8 +44,9 @@ async def repeat(content, channel):
             return
 
 async def repeat_after_me(content, channel):
-    msg = content.strip('.me ')
-    await channel.send(msg)
+    msg = content.split()
+    if msg[0] == '.me':
+        await channel.send(content.strip('.me '))
     return
 
 async def prepare_battle(content, channel):
@@ -102,7 +103,7 @@ async def battle_cmd(content, channel, game):
             deck_ready = first_deck_ready and second_deck_ready
             is_init = player_1.deck_pos == 0 and player_2.deck_pos == 0
             if deck_ready and is_init:
-                save_game_to_file(game)
+                save_game_to_file(game.channel.id)
                 await channel.send(f'房號：{game.room_num}')
                 await channel.send(f'{player_1.name}：{player_1.first}。' + 
                     f'{player_2.name}：{player_2.first}。')

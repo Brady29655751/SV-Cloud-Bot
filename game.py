@@ -212,7 +212,7 @@ def create_game(channel, player_1, player_2, mode='normal'):
     game = Game(channel, player_1, player_2, mode)
     running_games[channel.id] = game
     save_running_games_to_file()
-    save_game_to_file(game)
+    save_game_to_file(game.channel.id)
     
     if deleted_channel_id:
         return ('Delete Old', (game, deleted_channel))
@@ -232,8 +232,9 @@ def get_game_from_file(room_num, bot):
     game.save_time = dt.datetime.strptime(content['save_time'], '%Y/%m/%d %H:%M:%S')
     return game
 
-def save_game_to_file(game):
-    global data_dir
+def save_game_to_file(channel_id):
+    global data_dir, running_games
+    game = running_games[channel_id]
     game.save_time = dt.datetime.now() + dt.timedelta(hours=8)
 
     room_num = game.room_num
@@ -282,7 +283,7 @@ def save_all_games_to_file():
     global running_games
     save_running_games_to_file()
     for key, values in running_games.items():
-        save_game_to_file(values)
+        save_game_to_file(key)
     return
 
 ###########
@@ -306,7 +307,7 @@ def init_game(channel, name_1, name_2, mode='normal'):
         game.player_1.deck = []
         game.player_2.deck = []
         status = (status[0], (status[1][0], status[1][1]), twopick.init_game(player_1, player_2))
-        save_game_to_file(game)
+        save_game_to_file(game.channel.id)
     return status
 
 # .keep name [cards]
@@ -376,7 +377,7 @@ def choose(channel_id, player, choice):
                 item = f'{player.name} 選牌結束。'
         else:
             return ('Error', '已經過了選牌階段')
-        save_game_to_file(game)
+        save_game_to_file(game.channel.id)
     return ('Correct', item)
 
 # .draw name count
@@ -477,7 +478,7 @@ def save_game(channel_id):
     if not is_game_playing(channel_id):
         return ('Error', '該頻道沒有正在進行的雲對戰')
 
-    save_game_to_file(running_games[channel_id])
+    save_game_to_file(channel_id)
     return ('Correct', running_games[channel_id])
 
 # .quit

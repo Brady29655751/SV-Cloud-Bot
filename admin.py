@@ -91,7 +91,7 @@ async def game_save(content, channel):
         await channel.send(f'房間號碼不存在')
         return
 
-    game_channel = sv.save_game_to_file(game)
+    game_channel = sv.save_game_to_file(game.channel.id)
     await channel.send(f'已儲存房號 {room_num} 的對戰數據。')
 
 async def game_quit(content, channel):
