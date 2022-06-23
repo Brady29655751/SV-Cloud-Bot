@@ -1,4 +1,5 @@
 import discord
+import os
 import random
 import datetime as dt
 import game as sv
@@ -40,7 +41,12 @@ async def repeat(content, channel):
     else:
         repeat_message[0] += 1
         if repeat_message[0] == 3:
-            await channel.send(msg)
+            try:
+                await channel.send(msg)
+            except Exception:
+                sv.save_running_games_to_file()
+                sv.save_all_games_to_file()
+                os.system('kill 1')
             return
 
 async def repeat_after_me(content, channel):

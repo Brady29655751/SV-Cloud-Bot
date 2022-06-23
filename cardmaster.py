@@ -153,7 +153,7 @@ def search_card(name, option='name'):
             return card_list[0]
         return [x.name for x in card_list]
     elif option in ['travel', 'filter']:
-        if option == 'filter' and token == 'all':
+        if option == 'travel' and token == 'all':
             return random.choice(card_master_travel)
         else:
             length = len(token)
