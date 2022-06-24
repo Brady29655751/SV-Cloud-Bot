@@ -52,8 +52,10 @@ def int_list_parser(string_list, error=False, use_list_reader=False):
     if use_list_reader:
         string_list = list_reader(string_list)    
     result = [int_parser(x, error) for x in string_list]
-    if error and (False in result):
-        return False
+    if error:
+        for r in result:
+            if isinstance(r, bool) and not r:
+                return False
     return result
 
 def list_reader(list_repr):

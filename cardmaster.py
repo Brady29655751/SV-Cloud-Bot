@@ -23,6 +23,13 @@ def init_card_trait(trait):
     trait_list = utils.int_list_parser(trait_list)
     return trait_list
 
+def init_card_ability(ability):
+    ability_list = ability.split('\\')
+    ability_list = utils.int_list_parser(ability_list, error=True)
+    if not ability_list:
+        ability_list = []
+    return ability_list
+
 def init_card_effect(effect):
     if not effect:
         return '（沒有卡片能力記敘）'
@@ -50,7 +57,7 @@ class Card:
             self.trait_name = db.trait_name[self.trait[0]]
             for trait_num in self.trait[1:]:
                 self.trait_name += f'．{db.trait_name[trait_num]}'
-            self.ability = init_card_trait(info['ability'])
+            self.ability = init_card_ability(info['ability'])
             self.ability_name = [db.ability_name[x] for x in self.ability]
             self.cost = int(info['cost'])
             self.atk = int(info['atk'])
@@ -216,18 +223,28 @@ def filt_card(card_list, label, compare, target):
     if label == 'name':
         target = init_card_name(target)
     elif label == 'trait':
+        trait_id = utils.int_parser(target, error=True)
+        if (not isinstance(trait_id, bool)) and trait_id >= 0:
+            target = db.trait_name[trait_id]
+
         if compare == '!=':
             return [x for x in card_list if target not in x.trait_name]
         return [x for x in card_list if target in x.trait_name]
     elif label == 'ability':
+        ability_id = utils.int_parser(target, error=True)
+        if (not isinstance(ability_id, bool)) and ability_id >= 0:
+            target = db.ability_name[ability_id]
+
         if compare == '!=':
-            return [x for x in card_list if target not in x.ability_name]
-        return [x for x in card_list if target in x.ability_name]
+            return [x for x in card_list if (x.ability_name) and (target not in x.ability_name)]
+        return [x for x in card_list if (x.ability_name) and (target in x.ability_name)]
     elif label == 'effect':
         return [x for x in card_list if ((target in x.effect) or (target in x.evo_effect))]
     elif label == 'token id':
         card_id = utils.int_parser(target, error=True)
         if card_id:
+            if compare == '!=':
+                return [x for x in card_list if target[0].id not in x.token_id]    
             return [x for x in card_list if target[0].id in x.token_id]
 
         card_list = list(set(card_list) | set(card_master_token))
