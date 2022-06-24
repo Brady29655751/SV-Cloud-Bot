@@ -57,9 +57,21 @@ async def repeat_after_me(content, channel):
 
 async def prepare_battle(content, channel):
     players = content.split()
-    if (len(players) != 3):
+    length = len(players)
+    if (length not in [3, 5]):
         await channel.send('對戰人數不是2位')
         return
+
+    info_1 = {'name': players[1], 'deck_init_count': 40}
+    info_2 = {'name': players[2], 'deck_init_count': 40}
+    if length == 5:
+        custom_deck_count_1 = utils.int_parser(players[2], error=True)
+        custom_deck_count_2 = utils.int_parser(players[4], error=True)
+        if (custom_deck_count_1 <= 0) or (custom_deck_count_2 <= 0):
+            await channel.send('牌堆卡片數量須為正整數')
+            return
+        info_1 = {'name': players[1], 'deck_init_count': custom_deck_count_1}
+        info_2 = {'name': players[3], 'deck_init_count': custom_deck_count_2}
 
     await channel.send('バトル！シャドバース！')
 
@@ -67,7 +79,7 @@ async def prepare_battle(content, channel):
     if players[0].startswith('.2pick'):
         mode = '2pick'
 
-    status = sv.init_game(channel, players[1], players[2], mode)
+    status = sv.init_game(channel, info_1, info_2, mode)
     if (status[0] == 'Correct') or (status[0] == 'Delete Old'):
         room_num = status[1][0].room_num
         player_1 = status[1][0].player_1
@@ -643,9 +655,10 @@ async def help(content, channel):
             '18. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
-            await channel.send('指令格式：.battle 玩家1名字 玩家2名字')
+            await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
             await channel.send('指令範例：.battle 頭痛鯊 資工鯊')
             await channel.send('指令說明：開啟一場兩人的雲對戰。目前此Bot最多只能同時進行30場對戰。\n' + 
+                '\t※ 預設牌堆卡片為40張。目前可以客製化牌堆卡片張數。Ex：.battle 頭痛鯊 30 資工鯊 75\n' + 
                 '\t※ 注意：Bot可能會因為突發狀況或維護需要而導致數據損失或遭到刪除。')
         elif msg[1] == '2pick':
             await channel.send('指令格式：.2pick 玩家1名字 玩家2名字')

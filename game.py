@@ -34,14 +34,15 @@ class Game:
         self.mode = mode
 
 class Player:
-    def __init__(self, id, name, first):
+    def __init__(self, id, name, first, deck_init_count = 40):
         self.id = id
         self.name = name
         self.first = '先手' if first == 0 else '後手'
         self.has_kept = False
         self.deck_effect = {}
         self.deck_pos = 3
-        self.deck = [i+1 for i in range(0, 40)]
+        self.deck_init_count = deck_init_count
+        self.deck = [i+1 for i in range(0, self.deck_init_count)]
         random.shuffle(self.deck)
         self.data = {}
 
@@ -105,6 +106,7 @@ def get_player_from_file(room_num):
         player[i] = Player(int(content[i]['id']), content[i]['name'], int(content[i]['first']))
         player[i].has_kept = True if content[i]['has_kept'] == 'True' else False
         player[i].deck_pos = int(content[i]['deck_pos'])
+        player[i].deck_pos = int(content[i]['deck_init_count'])
         player[i].deck = deck_reader(content[i]['deck'])
         for info in deck_effect[i]:
             card = utils.int_parser(info['card'])
@@ -131,7 +133,7 @@ def save_player_to_file(room_num, players):
     path_deck_effect_2 = os.path.join(data_dir, room_num, 'deck_effect_2.csv')
     path_deck_effect = [path_deck_effect_1, path_deck_effect_2]
     
-    header = ['id', 'name', 'first', 'has_kept', 'deck_pos', 'deck']
+    header = ['id', 'name', 'first', 'has_kept', 'deck_pos', 'deck_init_count', 'deck']
     content = []
     for i in range(2):
         subcontent = {}
@@ -141,6 +143,7 @@ def save_player_to_file(room_num, players):
         subcontent['first'] = '0' if player.first == '先手' else '1'
         subcontent['has_kept'] = str(player.has_kept)
         subcontent['deck_pos'] = str(player.deck_pos)
+        subcontent['deck_init_count'] = str(player.deck_init_count)
         subcontent['deck'] = str(player.deck)
         content.append(subcontent)
     fh.write(path_player, content, header)
@@ -290,11 +293,11 @@ def save_all_games_to_file():
 # game functions
 
 # .battle name_1 name_2
-def init_game(channel, name_1, name_2, mode='normal'):
+def init_game(channel, info_1, info_2, mode='normal'):
     first = random.randint(0,1)
 
-    player_1 = Player(1, name_1, first)
-    player_2 = Player(2, name_2, 1 - first)
+    player_1 = Player(1, info_1['name'], first, info_1['deck_init_count'])
+    player_2 = Player(2, info_2['name'], 1 - first, info_2['deck_init_count'])
 
     status = create_game(channel, player_1, player_2, mode)
     if status[0] == 'Error':
@@ -304,6 +307,8 @@ def init_game(channel, name_1, name_2, mode='normal'):
     if mode == '2pick':
         game.player_1.deck_pos = 0
         game.player_2.deck_pos = 0
+        game.player_1.deck_init_count = 30
+        game.player_2.deck_init_count = 30
         game.player_1.deck = []
         game.player_2.deck = []
         status = (status[0], (status[1][0], status[1][1]), twopick.init_game(player_1, player_2))
@@ -316,7 +321,7 @@ def keep_cards(player, cards):
         return ('Error', '已經過了起手換牌階段')
     
     if cards[0] == 'none':
-        player.deck = [i+1 for i in range(0, 40)]
+        player.deck = [i+1 for i in range(0, player.deck_init_count)]
         random.shuffle(player.deck)
         player.has_kept = True
         return ('Correct', player.deck[0:3])
@@ -329,7 +334,7 @@ def keep_cards(player, cards):
     if not id_list:
         return ('Error', '卡片序號需為整數')
 
-    new_deck = [i+1 for i in range(0, 40)]
+    new_deck = [i+1 for i in range(0, player.deck_init_count)]
 
     start_deck = player.deck[0:3]
     for id in id_list:
