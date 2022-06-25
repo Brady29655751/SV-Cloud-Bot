@@ -222,6 +222,14 @@ async def deck_info(content, channel):
     elif cmd == 'used':
         await channel.send(f'{player.name}已抽取的卡片為：{player.deck[0:player.deck_pos]}')
         await channel.send(f'總計 {player.deck_pos} 張。')
+    elif cmd == 'shuffle':
+        old_head = player.deck[0:player.deck_pos]
+        old_tail = player.deck[player.deck_pos:]
+        random.shuffle(old_tail)
+        old_head.extend(old_tail)
+        player.deck = old_head
+        sv.save_game(channel.id)
+        await channel.send(f'{player.name}進行洗牌。')
     else:
         await channel.send(f'沒有此項指令。')
     
@@ -674,12 +682,13 @@ async def help(content, channel):
             await channel.send('指令範例：.player')
             await channel.send('指令說明：查看該頻道正在進行雲對戰的玩家。')
         elif msg[1] == 'deck':
-            await channel.send('指令格式：.deck 玩家名字 count/show/used')
+            await channel.send('指令格式：.deck 玩家名字 count/show/used/shuffle')
             await channel.send('指令範例：.deck 頭痛鯊 show')
             await channel.send('指令說明：\n' +
                 '\tcount會查看該玩家牌堆中的卡片張數。\n' +
                 '\tshow會完整查看該玩家的牌堆。\n' +
-                '\tused會查看該玩家已抽取的卡片。')
+                '\tused會查看該玩家已抽取的卡片。\n' +
+                '\tshuffle會使該玩家的牌堆進行1次洗牌。')
         elif msg[1] == 'choose':
             await channel.send('指令格式：.choose 玩家名字 選擇')
             await channel.send('指令範例：.choose 頭痛鯊 左')
