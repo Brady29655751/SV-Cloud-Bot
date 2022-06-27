@@ -106,7 +106,7 @@ def get_player_from_file(room_num):
         player[i] = Player(int(content[i]['id']), content[i]['name'], int(content[i]['first']))
         player[i].has_kept = True if content[i]['has_kept'] == 'True' else False
         player[i].deck_pos = int(content[i]['deck_pos'])
-        player[i].deck_pos = int(content[i]['deck_init_count'])
+        player[i].deck_init_count = int(content[i]['deck_init_count'])
         player[i].deck = deck_reader(content[i]['deck'])
         for info in deck_effect[i]:
             card = utils.int_parser(info['card'])
