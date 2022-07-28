@@ -605,6 +605,30 @@ async def filter_portal(content, channel):
     await portal('.portal filter ' + target, channel)
     return
 
+
+async def cheat(content, channel):
+    msg = content.split()
+    event = None
+    if len(msg) > 2:
+        await channel.send('格式錯誤')
+        return
+    else:
+        option = "all" if len(msg) == 1 else msg[1]
+        status = sv.cheat(option)
+        if status[0] == "Error":
+            await channel.send(f'{result[1]}')
+            return
+
+        event = status[1]
+
+    title = event.title
+    content = event.content
+    effect = event.effect
+    await channel.send(
+        '====【'+ title +'】====\n\n' + 
+        content + '\n\n' + 
+        '**' + effect + '**')
+
 async def save(content, channel):
     status = sv.save_game(channel.id)
     if status[0] == 'Correct':
@@ -664,8 +688,9 @@ async def help(content, channel):
             '14. add\n' +
             '15. substitute\n' +
             '16. effect\n' +
-            '17. save\n' +
-            '18. quit')
+            '17. cheat\n'
+            '18. save\n' +
+            '19. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
@@ -756,7 +781,11 @@ async def help(content, channel):
                 '\t※ 條件式格式：標籤 大於/小於/等於 目標。中間需要空格。\n' + 
                 '\t※ 標籤：id, name, pack, class, rarity, type, trait, cost, atk, life, evoAtk, evoLife, \n' +
                 '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
-                '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')    
+                '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')
+        elif msg[1] == 'cheat':
+            await channel.send('指令格式：.cheat (職業)')
+            await channel.send('指令範例：.cheat')
+            await channel.send('指令說明：隨機產生1個作弊事件。有填入職業時只會產生該職業的作弊事件。')    
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

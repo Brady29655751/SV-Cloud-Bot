@@ -2,6 +2,7 @@
 # craft
 craft_count = 9
 craft_name = ['中立', '精靈', '皇家護衛', '巫師', '龍族', '死靈法師', '吸血鬼', '主教', '復仇者']
+craft_name_en = ['neutral', 'elf', 'royal', 'witch', 'dragon', 'necro', 'vampire', 'bishop', 'nemesis']
 
 # pack
 pack_count = 20

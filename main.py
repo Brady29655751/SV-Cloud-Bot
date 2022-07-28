@@ -37,6 +37,7 @@ client_command = {
     'portal': client.portal,
     'travel': client.travel,
     'filter': client.filter_portal,
+    'cheat': client.cheat,
     'save': client.save,
     'quit': client.quit,
     'help': client.help
