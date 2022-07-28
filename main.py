@@ -12,6 +12,8 @@ import admin
 
 bot_token = os.environ['bot_token']
 admin_id = os.environ['admin_id']
+channel = None
+content = None
 
 #############
 # commands
@@ -41,6 +43,7 @@ client_command = {
 }
 
 admin_command = {
+    'channel': admin.check_channel_id,
     'count': admin.game_count,
     'active': admin.check_active_time,
     'player': admin.check_player,
@@ -60,31 +63,33 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     global running_games
+    try:
+        channel = message.channel
+        content = message.content
+        if message.author == bot.user:
+            return
 
-    channel = message.channel
-    content = message.content
-    if message.author == bot.user:
-        return
+        # admin cmd
+        if str(message.author.id) == admin_id:
+            for key, values in admin_command.items():
+                if content.startswith('.admin game ' + key):
+                    await values(content, channel)
+                    return
 
-    # admin cmd
-    if str(message.author.id) == admin_id:
-        for key, values in admin_command.items():
-            if content.startswith('.admin game ' + key):
+        # client cmd
+        #print(message.author.id)
+        if content == '.quit':
+            await client.quit(content, channel, bot)
+            return
+
+        for key, values in client_command.items():
+            if content.startswith('.' + key):
                 await values(content, channel)
                 return
 
-    # client cmd
-    #print(message.author.id)
-    if content == '.quit':
-        await client.quit(content, channel, bot)
-        return
-    
-    for key, values in client_command.items():
-        if content.startswith('.' + key):
-            await values(content, channel)
-            return
-    
-    await client.idle(content, channel)
+        await client.idle(content, channel)
+    except Exception as e:
+        await admin.error_report(content, channel, e)
 
 keep_alive.keep_alive()
 bot.run(bot_token)

@@ -453,9 +453,13 @@ def substitute_deck(player, cards):
 
 # .effect name mode effect [cards]
 def modify_deck_effect(player, mode, effect, cards):
-    card_list = utils.int_list_parser(cards)
+    filt_list = []
+    if cards[0] == 'all':
+        filt_list = player.deck[player.deck_pos:]
+    else:
+        card_list = utils.int_list_parser(cards)
+        filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
     
-    filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
     if mode == 'add':
         for card in filt_list:
             if card in player.deck_effect:

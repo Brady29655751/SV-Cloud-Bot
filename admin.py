@@ -37,7 +37,23 @@ def get_room(room_num):
     for key, values in sv.running_games.items():
         if values.room_num == room_num:
             return values
-    return None    
+    return None
+
+async def error_report(content, channel, error_msg):
+    error_time = dt.datetime.now() + dt.timedelta(hours=8)
+    error_time = error_time.strftime('%Y/%m/%d %H:%M:%S')
+    try:
+        await channel.send(f'資工雲割了，請等待重啟（約5分鐘）。\n' + 
+            f'時間: {error_time}\n' +
+            f'錯誤: {error_msg}\n' +
+            f'頻道id: {channel.id}\n' + 
+            f'訊息內容: {content}')
+    except Exception as e:
+        print("Failed to report errors.") 
+    os.system("kill 1")   
+
+async def check_channel_id(content, channel):
+    await channel.send(f'頻道id: {channel.id}')
 
 async def game_count(content, channel):
     global last_save_time

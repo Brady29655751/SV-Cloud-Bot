@@ -42,11 +42,12 @@ async def repeat(content, channel):
         repeat_message[0] += 1
         if repeat_message[0] == 3:
             try:
-                await channel.send(msg)
+                if "資工雲" in msg:
+                    await channel.send("關我什麼事，不要什麼事情都扯到資工雲好嗎?")
+                else:
+                    await channel.send(msg)
             except Exception:
-                sv.save_running_games_to_file()
-                sv.save_all_games_to_file()
-                os.system('kill 1')
+                return
             return
 
 async def repeat_after_me(content, channel):
@@ -624,7 +625,11 @@ async def quit(content, channel, bot=None):
     game = sv.running_games[room_num]
 
     if game.is_quitting:
-        await channel.send(f'請回復".quit yes"以確認結束對戰。')
+        if content == '.quit yes':
+            sv.quit_game(channel.id)
+            await channel.send('The battle fucked up.')
+        else:
+            await channel.send(f'請回復".quit yes"以確認結束對戰。')
         return
     
     if (not game.is_quitting) and (bot != None):
