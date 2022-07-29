@@ -9,6 +9,7 @@ cheat_dir = os.path.join('.', 'cheat')
 
 cheat_sheet = []
 cheat_sheet_by_craft = [[] for i in range(db.craft_count)]
+cheat_sheet_by_title = {}
 
 class Cheat:
     def __init__(self, info, craft):
@@ -29,6 +30,7 @@ def init_cheat_sheet():
             cheat = Cheat(cheat_info, craft_index)
             cheat_sheet.append(cheat)
             cheat_sheet_by_craft[craft_index].append(cheat)
+            cheat_sheet_by_title[cheat.title] = cheat
     return
             
 

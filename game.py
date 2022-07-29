@@ -489,6 +489,9 @@ def portal(name, option='name'):
 def cheat(option='all'):
     if option == 'all':
         return ('Correct', random.choice(cs.cheat_sheet))
+    if option == 'count':
+        return ('Count', [(db.craft_name[i], len(x)) for i, x in enumerate(cs.cheat_sheet_by_craft)])
+
     if option in db.craft_name:
         index = db.craft_name.index(option)
         return ('Correct', random.choice(cs.cheat_sheet_by_craft[index]))
@@ -496,6 +499,9 @@ def cheat(option='all'):
         index = db.craft_name_en.index(option)
         return ('Correct', random.choice(cs.cheat_sheet_by_craft[index]))
     
+    if option in cs.cheat_sheet_by_title:
+        return ('Correct', cs.cheat_sheet_by_title[option])
+
     index = utils.int_parser(option, True)
     if (not isinstance(index, bool)) and (index in range(0, db.craft_count)):
         return ('Correct', random.choice(cs.cheat_sheet_by_craft[index]))

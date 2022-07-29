@@ -616,7 +616,15 @@ async def cheat(content, channel):
         option = "all" if len(msg) == 1 else msg[1]
         status = sv.cheat(option)
         if status[0] == "Error":
-            await channel.send(f'{result[1]}')
+            await channel.send(f'{status[1]}')
+            return
+
+        if status[0] == "Count":
+            length_list = [x[1] for x in status[1]]
+            cnt = f"總計：{sum(length_list)}\n\n"
+            for i, content in enumerate(status[1]):
+                cnt += f'{content[0]}： {content[1]}\n'                
+            await channel.send(f'{cnt}')
             return
 
         event = status[1]
@@ -783,9 +791,12 @@ async def help(content, channel):
                 '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
                 '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')
         elif msg[1] == 'cheat':
-            await channel.send('指令格式：.cheat (職業)')
+            await channel.send('指令格式：.cheat (count/職業/事件標題)')
             await channel.send('指令範例：.cheat')
-            await channel.send('指令說明：隨機產生1個作弊事件。有填入職業時只會產生該職業的作弊事件。')    
+            await channel.send('指令說明：隨機產生1個作弊事件。\n' + 
+                '\t※ 填入count時會告知目前的作弊事件數量總和。\n' +
+                '\t※ 填入職業時只會產生該職業的作弊事件。\n' + 
+                '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')    
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')
