@@ -12,8 +12,8 @@ import admin
 
 bot_token = os.environ['bot_token']
 admin_id = os.environ['admin_id']
-channel = None
 content = None
+channel = None
 
 #############
 # commands
@@ -27,6 +27,7 @@ client_command = {
     'player': client.game_info,
     'deck': client.deck_info,
     'choose': client.choose,
+    'shuffle': client.shuffle,
     'keep': client.keep,
     'draw': client.draw,
     'search': client.search,
@@ -59,6 +60,8 @@ bot = discord.Client()
 @bot.event
 async def on_ready():
     print('目前登入身分：', bot.user)
+    playing_game = discord.Game(name='雲SV')
+    await bot.change_presence(activity=playing_game)
     admin.on_ready(bot)
 
 @bot.event
@@ -94,3 +97,4 @@ async def on_message(message):
 
 keep_alive.keep_alive()
 bot.run(bot_token)
+  

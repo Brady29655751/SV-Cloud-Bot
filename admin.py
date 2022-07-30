@@ -1,3 +1,4 @@
+import os
 import discord
 from discord.ext import tasks, commands
 import datetime as dt
@@ -39,7 +40,7 @@ def get_room(room_num):
     for key, values in sv.running_games.items():
         if values.room_num == room_num:
             return values
-    return None
+    return None    
 
 async def error_report(content, channel, error_msg):
     error_time = dt.datetime.now() + dt.timedelta(hours=8)
@@ -54,6 +55,7 @@ async def error_report(content, channel, error_msg):
         print("Failed to report errors.") 
     os.system("kill 1")   
 
+  
 async def check_channel_id(content, channel):
     await channel.send(f'頻道id: {channel.id}')
 

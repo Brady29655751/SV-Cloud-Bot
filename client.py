@@ -11,6 +11,33 @@ import utility as utils
 filter_result = None
 repeat_message = [0, None]
 
+emoji_dict = {
+    'bruh': '🈹',
+    'what': '❓',
+    'think': '🤔',
+    'dalao': '🛐',
+    'rage': '😡',
+    'fire': '🔥',
+    'ok': '👌',
+    'flag': '🚩',
+    'sleep': '<:SHARKS:867019594609983488>',
+    'rampu': '<:SHARKS:867019594609983488>',
+    'pika': '<:Pika:511824285200023553>',
+    'rowen': '<:RealRoman:963383684403167262>',
+    'rowhat': '<:RomenQuestion:997365156524863548>',
+    'doge': '<:DOGE:885103689109483520>',
+    'die': '<:SHARK2:867019619995090944>',
+    'left': '<:Left:918703127627169822>',
+    'stock': '<:Stock:568279543488708649>',
+    'goldship': '<:GoldShip2:888297995613908993>',
+    'good': '<:SharkLike:898424959473446932>',
+    'eat': '<:EATEAT:867019582292361227>',
+    'sekka': '<:Sekka:918704936399826984>',
+    'jhin': '<:Jhin:430713381310169099>',
+    'klee': '<:Klee:899908030865494066>',
+    'hentai': '<:Koharu:988058915776364594>',
+}
+
 ########
 # lazy functions
 
@@ -31,7 +58,13 @@ def get_card_effect(player, card_list):
 # client function. send message to channel.
 
 async def idle(content, channel):
+    #print(channel.id)
+    for key, values in emoji_dict.items():
+        if (content == ('.' + key)):
+            await channel.send(values)
+            return
     await repeat(content, channel)
+    return
 
 async def repeat(content, channel):
     global repeat_message
@@ -233,7 +266,15 @@ async def deck_info(content, channel):
         await channel.send(f'{player.name}進行洗牌。')
     else:
         await channel.send(f'沒有此項指令。')
-    
+
+async def shuffle(content, channel):
+    msg = content.split()
+    if (len(msg) == 2):
+        await deck_info('.deck ' + msg[1] + ' shuffle', channel)
+    else:
+        await channel.send('洗牌格式錯誤')
+    return
+  
 async def keep(content, channel):
     if not is_game_playing(channel.id):
         await channel.send('該頻道沒有正在進行的雲對戰')
@@ -605,7 +646,6 @@ async def filter_portal(content, channel):
     await portal('.portal filter ' + target, channel)
     return
 
-
 async def cheat(content, channel):
     msg = content.split()
     event = None
@@ -618,12 +658,12 @@ async def cheat(content, channel):
         if status[0] == "Error":
             await channel.send(f'{status[1]}')
             return
-
+          
         if status[0] == "Count":
             length_list = [x[1] for x in status[1]]
             cnt = f"總計：{sum(length_list)}\n\n"
             for i, content in enumerate(status[1]):
-                cnt += f'{content[0]}： {content[1]}\n'                
+                cnt += f'{content[0]}： {content[1]}\n'
             await channel.send(f'{cnt}')
             return
 
@@ -657,12 +697,12 @@ async def quit(content, channel, bot=None):
     game = sv.running_games[room_num]
 
     if game.is_quitting:
-        if content == '.quit yes':
-            sv.quit_game(channel.id)
-            await channel.send('The battle fucked up.')
-        else:
-            await channel.send(f'請回復".quit yes"以確認結束對戰。')
-        return
+      if content == '.quit yes':
+        sv.quit_game(channel.id)
+        await channel.send('The battle fucked up.')
+      else:
+        await channel.send(f'請回復".quit yes"以確認結束對戰。')
+      return
     
     if (not game.is_quitting) and (bot != None):
         game.is_quitting = True
@@ -689,16 +729,17 @@ async def help(content, channel):
             '7. player\n' +
             '8. deck\n' +
             '9. choose\n' +
-            '10. keep\n' +
-            '11. draw\n' +
-            '12. search\n' +
-            '13. explore\n' +
-            '14. add\n' +
-            '15. substitute\n' +
-            '16. effect\n' +
-            '17. cheat\n'
-            '18. save\n' +
-            '19. quit')
+            '10. shuffle\n' +
+            '11. keep\n' +
+            '12. draw\n' +
+            '13. search\n' +
+            '14. explore\n' +
+            '15. add\n' +
+            '16. substitute\n' +
+            '17. effect\n' +
+            '18. cheat\n' + 
+            '19. save\n' +
+            '20. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
@@ -732,6 +773,10 @@ async def help(content, channel):
             await channel.send('指令範例：.choose 頭痛鯊 左')
             await channel.send('指令說明：選擇對應的選項。\n' + 
                 '\t※ 此功能目前只適用於2pick模式選牌。')
+        elif msg[1] == 'shuffle':
+            await channel.send('指令格式：.shuffle 玩家名字')
+            await channel.send('指令範例：.shuffle 頭痛鯊')
+            await channel.send('指令說明：使該玩家的牌堆進行1次洗牌。') 
         elif msg[1] == 'keep':
             await channel.send('指令格式：.keep 玩家名字 卡片序號1 (卡片序號2) (卡片序號3)')
             await channel.send('指令範例：.keep 頭痛鯊 23 35')
@@ -789,14 +834,14 @@ async def help(content, channel):
                 '\t※ 條件式格式：標籤 大於/小於/等於 目標。中間需要空格。\n' + 
                 '\t※ 標籤：id, name, pack, class, rarity, type, trait, cost, atk, life, evoAtk, evoLife, \n' +
                 '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
-                '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')
+                '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')    
         elif msg[1] == 'cheat':
             await channel.send('指令格式：.cheat (count/職業/事件標題)')
             await channel.send('指令範例：.cheat')
             await channel.send('指令說明：隨機產生1個作弊事件。\n' + 
-                '\t※ 填入count時會告知目前的作弊事件數量總和。\n' +
-                '\t※ 填入職業時只會產生該職業的作弊事件。\n' + 
-                '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')    
+    '\t※ 填入count時會告知目前的作弊事件數量總和。\n' +
+    '\t※ 填入職業時只會產生該職業的作弊事件。\n' + 
+    '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')    
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')
