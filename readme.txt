@@ -18,8 +18,9 @@
 16. substitute 置換牌堆
 17. effect 修改牌堆卡片資訊
 18. cheat 隨機事件
-19. save 手動存檔
-20. quit 結束對戰
+19. nn 隨機廢話
+20. save 手動存檔
+21. quit 結束對戰
 
 
 #TODO

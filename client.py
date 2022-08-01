@@ -20,12 +20,15 @@ emoji_dict = {
     'fire': '🔥',
     'ok': '👌',
     'flag': '🚩',
+    'win': 'Are you winning, son?',
+    'lose': '我要去加強了。',
     'sleep': '<:SHARKS:867019594609983488>',
     'rampu': '<:SHARKS:867019594609983488>',
     'pika': '<:Pika:511824285200023553>',
     'rowen': '<:RealRoman:963383684403167262>',
     'rowhat': '<:RomenQuestion:997365156524863548>',
     'doge': '<:DOGE:885103689109483520>',
+    'bird': '<:FatWing:958265858440957962>',
     'die': '<:SHARK2:867019619995090944>',
     'left': '<:Left:918703127627169822>',
     'stock': '<:Stock:568279543488708649>',
@@ -36,6 +39,7 @@ emoji_dict = {
     'jhin': '<:Jhin:430713381310169099>',
     'klee': '<:Klee:899908030865494066>',
     'hentai': '<:Koharu:988058915776364594>',
+    'koharu': '<:Koharu:994090191113424977>'
 }
 
 ########
@@ -59,9 +63,17 @@ def get_card_effect(player, card_list):
 
 async def idle(content, channel):
     #print(channel.id)
+    msg = content.split()
+    if not msg:
+        return
+    if content.lower() == 'wait what wow':
+        msg = ['.think', 'goldship', 'stock']
+        
     for key, values in emoji_dict.items():
-        if (content == ('.' + key)):
-            await channel.send(values)
+        if (msg[0] == ('.' + key)):
+            emoji_queue = [values] + [emoji_dict[key] for key in msg[1:] if key in emoji_dict]
+            value_queue = utils.concate_content_with_character(emoji_queue, ' ')
+            await channel.send(value_queue)
             return
     await repeat(content, channel)
     return
@@ -85,8 +97,11 @@ async def repeat(content, channel):
 
 async def repeat_after_me(content, channel):
     msg = content.split()
+    if len(msg) < 2:
+        return
     if msg[0] == '.me':
-        await channel.send(content.strip('.me '))
+        ret = utils.concate_content_with_character(msg[1:], ' ')
+        await channel.send(ret)
     return
 
 async def prepare_battle(content, channel):
@@ -646,6 +661,13 @@ async def filter_portal(content, channel):
     await portal('.portal filter ' + target, channel)
     return
 
+async def n_thinking(content, channel):
+    if content != '.nn':
+        return
+    status = sv.n_thinking()
+    await channel.send(f'{status}')
+    return
+
 async def cheat(content, channel):
     msg = content.split()
     event = None
@@ -657,6 +679,10 @@ async def cheat(content, channel):
         status = sv.cheat(option)
         if status[0] == "Error":
             await channel.send(f'{status[1]}')
+            return
+        
+        if status[0] == "List":
+            await channel.send(f'該職業作弊總表：\n{status[1]}')
             return
           
         if status[0] == "Count":
@@ -737,9 +763,10 @@ async def help(content, channel):
             '15. add\n' +
             '16. substitute\n' +
             '17. effect\n' +
-            '18. cheat\n' + 
-            '19. save\n' +
-            '20. quit')
+            '18. cheat\n' +
+            '19. nn\n' +
+            '20. save\n' +
+            '21. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
@@ -836,12 +863,17 @@ async def help(content, channel):
                 '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
                 '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')    
         elif msg[1] == 'cheat':
-            await channel.send('指令格式：.cheat (count/職業/事件標題)')
-            await channel.send('指令範例：.cheat')
+            await channel.send('指令格式：.cheat (count/list序號/職業/事件標題)')
+            await channel.send('指令範例：.cheat list2')
             await channel.send('指令說明：隨機產生1個作弊事件。\n' + 
     '\t※ 填入count時會告知目前的作弊事件數量總和。\n' +
+    '\t※ 填入list序號時可以查看該職業序號的作弊事件總表。\n' +
     '\t※ 填入職業時只會產生該職業的作弊事件。\n' + 
     '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')    
+        elif msg[1] == 'nn':
+            await channel.send('指令格式：.nn')
+            await channel.send('指令範例：.nn')
+            await channel.send('指令說明：N仔突然想到一件事。如果由bot說出N仔突然想到的話，能不能算是N仔突然想到嗎？')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

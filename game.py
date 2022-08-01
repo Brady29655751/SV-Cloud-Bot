@@ -481,13 +481,25 @@ def modify_deck_effect(player, mode, effect, cards):
 
     return ('Correct', mode)
 
+# .portal [option]
 def portal(name, option='name'):
     return cm.search_card(name, option)
+
+# .nn
+def n_thinking():
+    return random.choice(cs.n_thinking)
 
 #.cheat [craft]
 def cheat(option='all'):
     if option == 'all':
         return ('Correct', random.choice(cs.cheat_sheet))
+
+    if option.startswith('list'):
+        option = option.strip('list')
+        index = utils.int_parser(option, True)
+        if (not isinstance(index, bool)) and (index in range(0, db.craft_count)):
+            return ('List', [x.title for x in cs.cheat_sheet_by_craft[index]])
+
     if option == 'count':
         return ('Count', [(db.craft_name[i], len(x)) for i, x in enumerate(cs.cheat_sheet_by_craft)])
       
@@ -507,6 +519,7 @@ def cheat(option='all'):
 
     return ('Error', '未發現該系列')
 
+# .save
 def save_game(channel_id):
     global running_games
     if not is_game_playing(channel_id):
