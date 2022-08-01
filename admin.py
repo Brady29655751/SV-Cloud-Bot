@@ -6,6 +6,7 @@ import datetime as dt
 import game as sv
 import cardmaster as cm
 import cheatsheet as cs
+import meme
 
 #######
 # global
@@ -29,6 +30,7 @@ async def auto_save():
 
 def on_ready(bot):
     sv.get_running_games_from_file(bot)
+    meme.init_meme()
     cm.init_card_master()
     cs.init_cheat_sheet()
     auto_save.start()

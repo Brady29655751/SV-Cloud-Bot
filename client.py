@@ -3,6 +3,7 @@ import os
 import random
 import datetime as dt
 import game as sv
+import meme
 import utility as utils
 
 #######
@@ -10,37 +11,6 @@ import utility as utils
 
 filter_result = None
 repeat_message = [0, None]
-
-emoji_dict = {
-    'bruh': '🈹',
-    'what': '❓',
-    'think': '🤔',
-    'dalao': '🛐',
-    'rage': '😡',
-    'fire': '🔥',
-    'ok': '👌',
-    'flag': '🚩',
-    'win': 'Are you winning, son?',
-    'lose': '我要去加強了。',
-    'sleep': '<:SHARKS:867019594609983488>',
-    'rampu': '<:SHARKS:867019594609983488>',
-    'pika': '<:Pika:511824285200023553>',
-    'rowen': '<:RealRoman:963383684403167262>',
-    'rowhat': '<:RomenQuestion:997365156524863548>',
-    'doge': '<:DOGE:885103689109483520>',
-    'bird': '<:FatWing:958265858440957962>',
-    'die': '<:SHARK2:867019619995090944>',
-    'left': '<:Left:918703127627169822>',
-    'stock': '<:Stock:568279543488708649>',
-    'goldship': '<:GoldShip2:888297995613908993>',
-    'good': '<:SharkLike:898424959473446932>',
-    'eat': '<:EATEAT:867019582292361227>',
-    'sekka': '<:Sekka:918704936399826984>',
-    'jhin': '<:Jhin:430713381310169099>',
-    'klee': '<:Klee:899908030865494066>',
-    'hentai': '<:Koharu:988058915776364594>',
-    'koharu': '<:Koharu:994090191113424977>'
-}
 
 ########
 # lazy functions
@@ -66,15 +36,11 @@ async def idle(content, channel):
     msg = content.split()
     if not msg:
         return
-    if content.lower() == 'wait what wow':
-        msg = ['.think', 'goldship', 'stock']
-        
-    for key, values in emoji_dict.items():
-        if (msg[0] == ('.' + key)):
-            emoji_queue = [values] + [emoji_dict[key] for key in msg[1:] if key in emoji_dict]
-            value_queue = utils.concate_content_with_character(emoji_queue, ' ')
-            await channel.send(value_queue)
-            return
+    ret = meme.get_emoji(content) if content.startswith('.') else meme.get_meme(content)
+    if ret:
+        await channel.send(ret)
+        return
+
     await repeat(content, channel)
     return
 

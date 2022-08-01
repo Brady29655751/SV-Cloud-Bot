@@ -60,10 +60,10 @@ bot = discord.Client()
 
 @bot.event
 async def on_ready():
-    print('目前登入身分：', bot.user)
     playing_game = discord.Game(name='雲SV')
     await bot.change_presence(activity=playing_game)
     admin.on_ready(bot)
+    print('目前登入身分：', bot.user)
 
 @bot.event
 async def on_message(message):
