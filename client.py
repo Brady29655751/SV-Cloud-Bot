@@ -36,7 +36,16 @@ async def idle(content, channel):
     msg = content.split()
     if not msg:
         return
-    ret = meme.get_emoji(content) if content.startswith('.') else meme.get_meme(content)
+
+    ret = meme.get_meme(content)
+    if ret:
+        if isinstance(ret, str):
+            await channel.send(ret)
+            return
+        await channel.send(file=ret)
+        return
+        
+    ret = meme.get_emoji(content)
     if ret:
         await channel.send(ret)
         return
@@ -48,6 +57,12 @@ async def repeat(content, channel):
     global repeat_message
     msg = content
     if repeat_message[1] != msg:
+        if (repeat_message[0] >= 3) and ("資工雲你" in msg):
+            ret = ("資工雲當然可以doge " + meme.emoji_dict['doge']) if (repeat_message[1] == meme.emoji_dict['doge']) else "總之複讀就對了"
+            try:
+                await channel.send(f'{ret}')
+            except Exception:
+                ret = None
         repeat_message = [1, msg]
     else:
         repeat_message[0] += 1
@@ -119,17 +134,20 @@ async def prepare_battle(content, channel):
 
 async def battle_cmd(content, channel, game):
     msg = content.split()
-    if len(msg) != 2:
-        await channel.send('對戰指令格式錯誤')
-        return
     cmd = msg[1]
     mode = game.mode
     player_1 = game.player_1
     player_2 = game.player_2
+
     if mode == 'normal':
         await channel.send('該頻道有其他正在進行的雲對戰。')
         return
-    elif mode == '2pick':
+    
+    if len(msg) != 2:
+        await channel.send('對戰指令格式錯誤')
+        return
+        
+    if mode == '2pick':
         if cmd == 'ready':
             first_deck_ready = len(player_1.deck) == 30
             second_deck_ready = len(player_2.deck) == 30
@@ -228,6 +246,9 @@ async def deck_info(content, channel):
     name = msg[1]
     cmd = msg[2]
     player = get_player(channel.id, name)
+    if player == None:
+        await channel.send("名字寫錯")
+        return
 
     if cmd == 'count':
         await channel.send(f'{player.name}的牌堆有 {len(player.deck) - player.deck_pos} 張卡片。')

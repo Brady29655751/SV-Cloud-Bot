@@ -19,24 +19,31 @@ def concate_content_with_newline(string_list):
         new_string += x
     return new_string
 
-def append_char(string_list, character):
+def append_char(string_list, character, newline=''):
     if not string_list:
         return character
-    new_list = [x + character for x in string_list]
+    new_list = []
+    for x in string_list:
+        new_str = ('\n') if (x == newline) else (x + character)
+        new_list.append(new_str)
+            
     new_list[-1] = string_list[-1]
     return new_list
 
-def concate_content_with_character(string_list, character):
+def concate_content_with_character(string_list, character, newline=''):
     if not string_list:
         return ''
     if len(string_list) == 1:
         return string_list[0]
         
     new_string = ''
-    new_list = append_char(string_list, character)
+    new_list = append_char(string_list, character, newline)
     for x in new_list:
         new_string += x
     return new_string
+
+def is_parsed_int(num, stop=-1):
+    return (not isinstance(num, bool)) and ((num in range(stop)) if stop != -1 else True)
 
 def int_parser(string, error=False):
     num = string
