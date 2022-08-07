@@ -57,8 +57,8 @@ async def repeat(content, channel):
     global repeat_message
     msg = content
     if repeat_message[1] != msg:
-        if (repeat_message[0] >= 3) and ("資工雲你" in msg):
-            ret = ("資工雲當然可以doge " + meme.emoji_dict['doge']) if (repeat_message[1] == meme.emoji_dict['doge']) else "總之複讀就對了"
+        if (repeat_message[0] >= 3) and ("資工雲" in msg):
+            ret = ("資工雲當然可以doge " + meme.emoji_dict['doge']) if (repeat_message[1] == meme.emoji_dict['doge']) else meme.emoji_dict['what']
             try:
                 await channel.send(f'{ret}')
             except Exception:
@@ -80,7 +80,7 @@ async def repeat_after_me(content, channel):
     msg = content.split()
     if len(msg) < 2:
         return
-    if msg[0] == '.me':
+    if (msg[0] == '.me') or (msg[0] == '.repeat'):
         ret = utils.concate_content_with_character(msg[1:], ' ')
         await channel.send(ret)
     return
@@ -648,6 +648,31 @@ async def filter_portal(content, channel):
     await portal('.portal filter ' + target, channel)
     return
 
+async def gacha(content, channel):
+    ur = 0.03
+    ssr = 0.185
+    r = 0.785
+    msg = content.split()
+    if (len(msg) == 1):
+        msg.append('1')
+    chance = utils.int_parser(msg[1], True)
+    if utils.is_parsed_int(chance, 11):
+        prize = '.'
+        for i in range(chance):
+            p = random.random()
+            if (i > 0) and (i % 5 == 0):
+                prize += 'next '
+            if p < ur:
+                prize += 'ur '
+            elif (p < (ur + ssr)) or (i % 10 == 9):
+                prize += 'ssr '
+            else:
+                prize += 'r '
+        await idle(prize, channel)
+        return
+    await channel.send('轉蛋次數僅能為1 ~ 10')
+    return
+
 async def n_thinking(content, channel):
     if content != '.nn':
         return
@@ -861,6 +886,10 @@ async def help(content, channel):
             await channel.send('指令格式：.nn')
             await channel.send('指令範例：.nn')
             await channel.send('指令說明：N仔突然想到一件事。如果由bot說出N仔突然想到的話，能不能算是N仔突然想到嗎？')
+        elif msg[1] == 'gacha':
+            await channel.send('指令格式：.gacha (1~10)')
+            await channel.send('指令範例：.gacha 10')
+            await channel.send('指令說明：轉蛋。不填入次數默認為1。UR機率3%、SSR機率18.5%、R機率78.5%。10連抽的第10抽必定為SSR以上稀有度。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

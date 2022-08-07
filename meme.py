@@ -9,6 +9,10 @@ meme_dir = os.path.join('.', 'meme')
 
 meme_dict = {}
 emoji_dict = {}
+emoji_translate = {
+  'wait what wow': '.think goldship stock',
+  '.big bruh': '.rage 10 rage 3 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage good rage good rage 3 good rage 2 next rage 3 good 3 rage 4 good rage 2 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 4 good rage 3 good rage good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 10 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage 3 good rage 3 good rage 2 next rage 2 good 5 rage 2 good 2 rage 2 next rage 10 rage 3'
+}
 
 def init_dict(filename, target_dict):
     global meme_dir
@@ -37,10 +41,10 @@ def get_meme(content):
     return False
 
 def get_emoji(content):
+    content = content.lower()
+    content = emoji_translate.get(content, content)
+  
     msg = content.split()
-    if content.lower() == 'wait what wow':
-        msg = ['.think', 'goldship', 'stock']
-
     for key, values in emoji_dict.items():
         if (msg[0] == ('.' + key)):
             last_emoji = values

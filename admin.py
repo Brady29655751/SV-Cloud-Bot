@@ -7,11 +7,13 @@ import game as sv
 import cardmaster as cm
 import cheatsheet as cs
 import meme
+import utility as utils
 
 #######
 # global
 
 last_save_time = None
+bot = None
 
 #######
 # bot functions
@@ -28,8 +30,10 @@ async def auto_save():
     print(f'Auto saved at: {last_save_time}')
     return
 
-def on_ready(bot):
-    sv.get_running_games_from_file(bot)
+def on_ready(dc_bot):
+    global bot
+    bot = dc_bot
+    sv.get_running_games_from_file(dc_bot)
     meme.init_meme()
     cm.init_card_master()
     cs.init_cheat_sheet()
@@ -163,3 +167,22 @@ async def game_announce(content, channel):
 
     await channel.send(f'已發送系統公告。\n\n'+ f'{announcement}')
 
+async def admin_repeat(content, channel):
+    global bot
+    msg = content.split()
+    if len(msg) < 5:
+        await channel.send(f'指令格式錯誤')
+        return
+    
+    channel_id = utils.int_parser(msg[3], True)
+    if utils.is_parsed_int(channel_id):
+        announcement = msg[4]
+        if len(msg) >= 6:
+            for text in msg[5:]:
+                announcement = announcement + '\n' + text
+        try:
+            send_channel = bot.get_channel(channel_id)
+            await send_channel.send(f'{announcement}')
+        except Exception:
+            await channel.send("發送訊息失敗。")
+    return

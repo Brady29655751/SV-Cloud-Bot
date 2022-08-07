@@ -20,6 +20,7 @@ channel = None
 
 client_command = {
     'me': client.repeat_after_me,
+    'repeat': client.repeat_after_me,
 
     'battle': client.battle,
     '2pick': client.battle,
@@ -40,6 +41,7 @@ client_command = {
     'filter': client.filter_portal,
     'cheat': client.cheat,
     'nn': client.n_thinking,
+    'gacha': client.gacha,
     'save': client.save,
     'quit': client.quit,
     'help': client.help
@@ -52,7 +54,8 @@ admin_command = {
     'player': admin.check_player,
     'save': admin.game_save,
     'quit': admin.game_quit,
-    'announce': admin.game_announce
+    'announce': admin.game_announce,
+    'repeat': admin.admin_repeat
 }
 
 ########
