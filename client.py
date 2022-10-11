@@ -37,19 +37,7 @@ async def idle(content, channel):
     if not msg:
         return
       
-    ret = meme.get_meme(content)
-    if ret:
-        if isinstance(ret, str):
-            await channel.send(ret)
-            return
-        await channel.send(file=ret)
-        return
-    
-    ret = meme.get_emoji(content)
-    if ret:
-        await channel.send(ret)
-        return
-  
+    await meme.response(content, channel)
     await repeat(content, channel)
     return
 

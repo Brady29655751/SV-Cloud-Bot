@@ -7,7 +7,7 @@ import filehandler as fh
 class Error:
     def __init__(self, error_msg, channel_id, content):
         self.time = (dt.datetime.now() + dt.timedelta(hours=8)).strftime('%Y/%m/%d %H:%M:%S')
-        self.error = error_msg
+        self.error = (str(error_msg)).split('\n')[0]
         self.channel_id = channel_id
         self.content = content
         self.error_dict = {
@@ -16,6 +16,7 @@ class Error:
             '頻道': self.channel_id,
             '內容': self.content
         }
+        self.error_list = utils.dict_to_str_list(self.error_dict, False)
         self.prompt = utils.dict_to_str_list(self.error_dict, True)
     
     def __repr__(self):
@@ -24,7 +25,7 @@ class Error:
 def get_error(error_msg, channel_id=-1, content="System Error"):
     error = Error(error_msg, channel_id, content)
     path = os.path.join('.', 'error_report.txt')
-    fh.write(path, error.prompt)
+    fh.write(path, error.error_list)
     return error
 
 async def error_report(content, channel, error_msg):

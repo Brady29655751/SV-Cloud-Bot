@@ -36,32 +36,39 @@ async def init_meme(bot):
 def get_meme(content):
     global meme_dict, meme_dir
     path = os.path.join(meme_dir, 'file')
-    if "<@985566260555300934>" in content:
-        path = os.path.join(path, meme_dict['who tag me'])
-        return discord.File(path)
-      
+    ret = {
+        'status': True,
+        'message': "",
+        'file': None
+    }
     if not (content.startswith('!') or content.startswith('！')):
-        return False
+        ret['status'] = False
+        return ret
     
     content = content.lower()
     key = content.strip('!！')
     if key == 'meme list':
-        return f'meme總表：\n{[x for x in meme_dict]}'    
+        ret['message'] = f'meme總表：\n{[x for x in meme_dict]}'
     elif key == '色圖':
-        ret = random.choice(garden)
-        ret = random.choice(ret.attachments)
-        return f'{ret.url}'
+        garden_msg = random.choice(garden)
+        garden_pic = random.choice(garden_msg.attachments)
+        ret['message'] = f'{garden_pic.url}'
     elif key == '寄':
-        return emoji_dict['die']
+        ret['message'] = emoji_dict['die']
     elif key in meme_dict:
         path = os.path.join(path, meme_dict[key])
-        return discord.File(path)
-    return False
+        ret['file'] = discord.File(path)
+    else:
+        ret['status'] = False
+    return ret
 
 def get_emoji(content):
+    ret = {
+        'status': False,
+        'message': ""
+    }
     content = content.lower()
     content = emoji_translate.get(content, content)
-  
     msg = content.split()
     for key, values in emoji_dict.items():
         if (msg[0] == ('.' + key)):
@@ -92,7 +99,28 @@ def get_emoji(content):
                             last_emoji = [row, col]
                   
             value_queue = utils.concate_content_with_character(emoji_queue, ' ', '\n')
-            if (not value_queue) or all(emo == '\n' for emo in value_queue):
-                return False
-            return value_queue
-    return False
+            if (value_queue) and (not all(emo == '\n' for emo in value_queue)):
+                ret['status'] = True
+                ret['message'] = value_queue
+                return ret
+            else:
+                ret['status'] = False
+                return ret
+    ret['status'] = False
+    return ret
+
+async def response(content, channel):
+    if "<@985566260555300934>" in content:
+        await channel.send(emoji_dict['what'])
+        return
+
+    ret = get_meme(content)
+    if ret['status']:
+        await channel.send(ret['message'], file=ret['file'])
+        return
+
+    ret = get_emoji(content)
+    if ret['status']:
+        await channel.send(ret['message'])
+        return
+    
