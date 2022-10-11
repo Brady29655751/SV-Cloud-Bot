@@ -36,7 +36,7 @@ async def idle(content, channel):
     msg = content.split()
     if not msg:
         return
-
+      
     ret = meme.get_meme(content)
     if ret:
         if isinstance(ret, str):
@@ -44,12 +44,12 @@ async def idle(content, channel):
             return
         await channel.send(file=ret)
         return
-        
+    
     ret = meme.get_emoji(content)
     if ret:
         await channel.send(ret)
         return
-
+  
     await repeat(content, channel)
     return
 
@@ -58,7 +58,7 @@ async def repeat(content, channel):
     msg = content
     if repeat_message[1] != msg:
         if (repeat_message[0] >= 3) and ("資工雲" in msg):
-            ret = ("資工雲當然可以doge " + meme.emoji_dict['doge']) if (repeat_message[1] == meme.emoji_dict['doge']) else meme.emoji_dict['what']
+            ret = ("資工雲笑而不語") if (repeat_message[1] == meme.emoji_dict['doge']) else (meme.emoji_dict['doge'] + ' ') * 3
             try:
                 await channel.send(f'{ret}')
             except Exception:
@@ -69,7 +69,7 @@ async def repeat(content, channel):
         if repeat_message[0] == 3:
             try:
                 if "資工雲" in msg:
-                    await channel.send("關我什麼事，不要什麼事情都扯到資工雲好嗎?")
+                    await channel.send("哼！資工雲才不會跟著你們一起復讀！")
                 else:
                     await channel.send(msg)
             except Exception:
@@ -138,7 +138,6 @@ async def battle_cmd(content, channel, game):
     mode = game.mode
     player_1 = game.player_1
     player_2 = game.player_2
-
     if mode == 'normal':
         await channel.send('該頻道有其他正在進行的雲對戰。')
         return
@@ -146,7 +145,7 @@ async def battle_cmd(content, channel, game):
     if len(msg) != 2:
         await channel.send('對戰指令格式錯誤')
         return
-        
+      
     if mode == '2pick':
         if cmd == 'ready':
             first_deck_ready = len(player_1.deck) == 30
@@ -649,28 +648,35 @@ async def filter_portal(content, channel):
     return
 
 async def gacha(content, channel):
+    pu = 0.007
     ur = 0.03
     ssr = 0.185
     r = 0.785
     msg = content.split()
-    if (len(msg) == 1):
+    if len(msg) == 1:
         msg.append('1')
     chance = utils.int_parser(msg[1], True)
-    if utils.is_parsed_int(chance, 11):
+    if utils.is_parsed_int(chance, 51):
         prize = '.'
+        pu_list = []
         for i in range(chance):
             p = random.random()
             if (i > 0) and (i % 5 == 0):
                 prize += 'next '
             if p < ur:
                 prize += 'ur '
+                if p < pu:
+                    pu_list.append(str(i+1))
             elif (p < (ur + ssr)) or (i % 10 == 9):
                 prize += 'ssr '
             else:
                 prize += 'r '
         await idle(prize, channel)
+        if pu_list:
+            pu_text = utils.concate_content_with_character(pu_list, ', ')
+            await channel.send("您在第 " + pu_text + " 抽成功出貨pick up")
         return
-    await channel.send('轉蛋次數僅能為1 ~ 10')
+    await channel.send('轉蛋次數僅能為1 ~ 50')
     return
 
 async def n_thinking(content, channel):
@@ -692,7 +698,7 @@ async def cheat(content, channel):
         if status[0] == "Error":
             await channel.send(f'{status[1]}')
             return
-        
+
         if status[0] == "List":
             await channel.send(f'該職業作弊總表：\n{status[1]}')
             return
@@ -755,7 +761,7 @@ async def help(content, channel):
     msg = content.split()
 
     if len(msg) == 1:
-        await channel.send('歡迎使用SV Cloud！')
+        await channel.send('歡迎使用資工雲！')
         await channel.send('請輸入 ".help 指令" 來查看各項指令用途！')
         await channel.send('目前的指令有：\n' +
             '1. battle\n' +
@@ -775,10 +781,11 @@ async def help(content, channel):
             '15. add\n' +
             '16. substitute\n' +
             '17. effect\n' +
-            '18. cheat\n' +
+            '18. cheat\n' + 
             '19. nn\n' +
-            '20. save\n' +
-            '21. quit')
+            '20. gacha\n'
+            '21. save\n' +
+            '22. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
@@ -875,21 +882,21 @@ async def help(content, channel):
                 '\t\tcountdown, ability, effect, evoEffect, author, token_id, image_url, mode\n' + 
                 '\t※ 在搜尋結果過多時，條件式1 若填入 back 或 next 可查看上一頁或下一頁。')    
         elif msg[1] == 'cheat':
-            await channel.send('指令格式：.cheat (count/list序號/職業/事件標題)')
+            await channel.send('指令格式：.cheat (count/職業/事件標題)')
             await channel.send('指令範例：.cheat list2')
             await channel.send('指令說明：隨機產生1個作弊事件。\n' + 
     '\t※ 填入count時會告知目前的作弊事件數量總和。\n' +
     '\t※ 填入list序號時可以查看該職業序號的作弊事件總表。\n' +
     '\t※ 填入職業時只會產生該職業的作弊事件。\n' + 
-    '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')    
+    '\t※ 填入事件標題時會搜尋對應的作弊事件。\n')
         elif msg[1] == 'nn':
             await channel.send('指令格式：.nn')
             await channel.send('指令範例：.nn')
-            await channel.send('指令說明：N仔突然想到一件事。如果由bot說出N仔突然想到的話，能不能算是N仔突然想到嗎？')
+            await channel.send('指令說明：N仔突然想到一件事。如果由bot說出N仔突然想到的話，能不能算是N仔突然想到？')
         elif msg[1] == 'gacha':
-            await channel.send('指令格式：.gacha (1~10)')
+            await channel.send('指令格式：.gacha (1~50)')
             await channel.send('指令範例：.gacha 10')
-            await channel.send('指令說明：轉蛋。不填入次數默認為1。UR機率3%、SSR機率18.5%、R機率78.5%。10連抽的第10抽必定為SSR以上稀有度。')
+            await channel.send('指令說明：轉蛋。不填入次數默認為1。UR機率3%、SSR機率17%、R機率80%。10連抽的第10抽必定為SSR以上稀有度。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

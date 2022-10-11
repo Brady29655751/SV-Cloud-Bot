@@ -8,6 +8,7 @@ import cardmaster as cm
 import cheatsheet as cs
 import meme
 import utility as utils
+import filehandler as fh
 
 #######
 # global
@@ -30,11 +31,11 @@ async def auto_save():
     print(f'Auto saved at: {last_save_time}')
     return
 
-def on_ready(dc_bot):
+async def on_ready(dc_bot):
     global bot
     bot = dc_bot
     sv.get_running_games_from_file(dc_bot)
-    meme.init_meme()
+    await meme.init_meme(dc_bot)
     cm.init_card_master()
     cs.init_cheat_sheet()
     auto_save.start()
@@ -47,20 +48,6 @@ def get_room(room_num):
         if values.room_num == room_num:
             return values
     return None    
-
-async def error_report(content, channel, error_msg):
-    error_time = dt.datetime.now() + dt.timedelta(hours=8)
-    error_time = error_time.strftime('%Y/%m/%d %H:%M:%S')
-    try:
-        await channel.send(f'資工雲割了，請等待重啟（約5分鐘）。\n' + 
-            f'時間: {error_time}\n' +
-            f'錯誤: {error_msg}\n' +
-            f'頻道id: {channel.id}\n' + 
-            f'訊息內容: {content}')
-    except Exception as e:
-        print("Failed to report errors.") 
-    os.system("kill 1")   
-
   
 async def check_channel_id(content, channel):
     await channel.send(f'頻道id: {channel.id}')
@@ -176,10 +163,11 @@ async def admin_repeat(content, channel):
     
     channel_id = utils.int_parser(msg[3], True)
     if utils.is_parsed_int(channel_id):
-        announcement = msg[4]
-        if len(msg) >= 6:
-            for text in msg[5:]:
-                announcement = announcement + '\n' + text
+        tmp = content.split('\n', 1)
+        if len(tmp) != 2:
+            await channel.send('指令格式錯誤')
+            return
+        announcement = tmp[1]
         try:
             send_channel = bot.get_channel(channel_id)
             await send_channel.send(f'{announcement}')

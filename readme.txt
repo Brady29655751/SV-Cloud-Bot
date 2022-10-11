@@ -19,8 +19,9 @@
 17. effect 修改牌堆卡片資訊
 18. cheat 隨機事件
 19. nn 隨機廢話
-20. save 手動存檔
-21. quit 結束對戰
+20. gacha 轉蛋
+21. save 手動存檔
+22. quit 結束對戰
 
 
 #TODO

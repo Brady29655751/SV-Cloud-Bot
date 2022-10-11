@@ -69,4 +69,11 @@ def list_reader(list_repr):
     content = list_repr.replace('[', '').replace(']', '').replace(', ', ' ').replace(',',' ')
     content = content.replace("'",'').replace('"', '').split()
     return content
- 
+
+def dict_to_str_list(dict_repr, concate_with_newline=False):
+    result = []
+    for key, values in dict_repr.items():
+        result.append(f'{key}: {values}')
+    if concate_with_newline:
+        result = concate_content_with_newline(result)
+    return result

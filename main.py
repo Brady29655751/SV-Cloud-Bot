@@ -3,6 +3,7 @@ import discord
 from discord.ext import tasks, commands
 import random
 import datetime as dt
+import errorhandler as err
 
 import keep_alive
 
@@ -12,8 +13,6 @@ import admin
 
 bot_token = os.environ['bot_token']
 admin_id = os.environ['admin_id']
-content = None
-channel = None
 
 #############
 # commands
@@ -65,7 +64,7 @@ bot = discord.Client()
 async def on_ready():
     playing_game = discord.Game(name='雲SV')
     await bot.change_presence(activity=playing_game)
-    admin.on_ready(bot)
+    await admin.on_ready(bot)
     print('目前登入身分：', bot.user)
 
 @bot.event
@@ -74,9 +73,12 @@ async def on_message(message):
     try:
         channel = message.channel
         content = message.content
+
         if message.author == bot.user:
             return
 
+        #print(channel.threads)
+        
         # admin cmd
         if str(message.author.id) == admin_id:
             for key, values in admin_command.items():
@@ -97,8 +99,12 @@ async def on_message(message):
 
         await client.idle(content, channel)
     except Exception as e:
-        await admin.error_report(content, channel, e)
+        await err.error_report(content, channel, e)
 
 keep_alive.keep_alive()
-bot.run(bot_token)
+try:
+  bot.run(bot_token)
+except Exception as e:
+  err.get_error(e)
+  os.system('kill 1')
   
