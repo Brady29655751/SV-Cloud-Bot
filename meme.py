@@ -112,15 +112,16 @@ def get_emoji(content):
 async def response(content, channel):
     if "<@985566260555300934>" in content:
         await channel.send(emoji_dict['what'])
-        return
+        return True
 
     ret = get_meme(content)
     if ret['status']:
         await channel.send(ret['message'], file=ret['file'])
-        return
+        return True
 
     ret = get_emoji(content)
     if ret['status']:
         await channel.send(ret['message'])
-        return
+        return True
+    return False
     

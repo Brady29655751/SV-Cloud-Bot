@@ -21,11 +21,13 @@ def is_game_playing(channel_id):
 def get_player(channel_id, name):
     return sv.get_player(channel_id, name)
 
-def get_card_effect(player, card_list):
+def get_card_effect(player, card_list, pop=True):
     info = ''
     for card in card_list:
         if card in player.deck_effect:
             info += f'{card}：{player.deck_effect[card]}\n'
+            if pop:
+                player.deck_effect.pop(card)
     return info
 
 ########
@@ -37,7 +39,10 @@ async def idle(content, channel):
     if not msg:
         return
       
-    await meme.response(content, channel)
+    ret = await meme.response(content, channel)
+    if ret:
+        return
+        
     await repeat(content, channel)
     return
 
@@ -427,7 +432,7 @@ async def explore(content, channel):
     status = sv.explore_from_deck(player, count)
     if status[0] == 'Correct':
         result = status[1][0] if len(status[1]) == 1 else status[1]
-        info = get_card_effect(player, status[1])
+        info = get_card_effect(player, status[1], pop=False)
 
         await channel.send(f'{player.name}的牌堆頂部{len(status[1])}張卡是：{result}')
         if info:
