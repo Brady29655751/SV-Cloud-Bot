@@ -38,11 +38,11 @@ async def idle(content, channel):
     msg = content.split()
     if not msg:
         return
-      
+    
     ret = await meme.response(content, channel)
     if ret:
-        return
-        
+      return
+    
     await repeat(content, channel)
     return
 
@@ -268,7 +268,36 @@ async def shuffle(content, channel):
     else:
         await channel.send('洗牌格式錯誤')
     return
-  
+
+async def count_cards(content, channel):
+    if not is_game_playing(channel.id):
+        await channel.send('該頻道沒有正在進行的雲對戰')
+        return
+    
+    msg = content.split()
+    if len(msg) < 2:
+        await channel.send('查詢格式錯誤')
+        return
+    
+    name = msg[1]
+    cards = msg[2:]
+    player = get_player(channel.id, name)
+    if player == None:
+        await channel.send('名字寫錯')
+        return
+
+    status = sv.count_from_deck(player, cards)
+    if status[0] == 'Correct':
+        result_list = [(str(key) + "：" + str(value) + " 張") for key, value in status[1].items()]
+        message = utils.concate_content_with_newline(result_list)
+        await channel.send(message)
+    elif status[0] == 'Info':
+        await channel.send(status[1])
+    elif status[0] == 'Error':
+        await channel.send(status[1])
+    else:
+        await channel.send('查詢牌堆特定卡片數量時遇到未知錯誤')
+      
 async def keep(content, channel):
     if not is_game_playing(channel.id):
         await channel.send('該頻道沒有正在進行的雲對戰')
@@ -377,7 +406,7 @@ async def search(content, channel):
         return
 
     msg = content.split()
-    if len(msg) < 4:
+    if len(msg) < 3:
         await channel.send('檢索格式錯誤')
         return
 
@@ -642,9 +671,9 @@ async def filter_portal(content, channel):
 
 async def gacha(content, channel):
     pu = 0.007
-    ur = 0.03
-    ssr = 0.185
-    r = 0.785
+    ur = 0.06
+    ssr = 0.17
+    r = 0.77
     msg = content.split()
     if len(msg) == 1:
         msg.append('1')
@@ -767,18 +796,19 @@ async def help(content, channel):
             '8. deck\n' +
             '9. choose\n' +
             '10. shuffle\n' +
-            '11. keep\n' +
-            '12. draw\n' +
-            '13. search\n' +
-            '14. explore\n' +
-            '15. add\n' +
-            '16. substitute\n' +
-            '17. effect\n' +
-            '18. cheat\n' + 
-            '19. nn\n' +
-            '20. gacha\n'
-            '21. save\n' +
-            '22. quit')
+            '11. count\n' +
+            '12. keep\n' +
+            '13. draw\n' +
+            '14. search\n' +
+            '15. explore\n' +
+            '16. add\n' +
+            '17. substitute\n' +
+            '18. effect\n' +
+            '19. cheat\n' + 
+            '20. nn\n' +
+            '21. gacha\n'
+            '22. save\n' +
+            '23. quit')
     elif len(msg) == 2:
         if msg[1] == 'battle':
             await channel.send('指令格式：.battle 玩家1名字 (玩家1牌堆卡片數量) 玩家2名字 (玩家2牌堆卡片數量)')
@@ -815,7 +845,11 @@ async def help(content, channel):
         elif msg[1] == 'shuffle':
             await channel.send('指令格式：.shuffle 玩家名字')
             await channel.send('指令範例：.shuffle 頭痛鯊')
-            await channel.send('指令說明：使該玩家的牌堆進行1次洗牌。') 
+            await channel.send('指令說明：使該玩家的牌堆進行1次洗牌。')
+        elif msg[1] == 'count':
+            await channel.send('指令格式：.count 玩家名字 (卡片序號1) (卡片序號2) (卡片序號3) ...')
+            await channel.send('指令範例：.count 頭痛鯊 25 26')
+            await channel.send('指令說明：查看該玩家牌堆特定卡片的剩餘數量。未填寫卡片序號則查看整個牌堆的剩餘卡片張數。') 
         elif msg[1] == 'keep':
             await channel.send('指令格式：.keep 玩家名字 卡片序號1 (卡片序號2) (卡片序號3)')
             await channel.send('指令範例：.keep 頭痛鯊 23 35')
@@ -827,9 +861,9 @@ async def help(content, channel):
             await channel.send('指令範例：.draw 頭痛鯊 2')
             await channel.send('指令說明：由該玩家的牌堆中抽取指定數量的卡片。未填寫數量則默認為1。')
         elif msg[1] == 'search':
-            await channel.send('指令格式：.search 玩家名字 數量+"張" 檢索範圍')
+            await channel.send('指令格式：.search 玩家名字 (數量+"張") 檢索範圍')
             await channel.send('指令範例：.search 頭痛鯊 2張 4 5 6 10 11 12 R0 R1 R2')
-            await channel.send('指令說明：由該玩家的牌堆中檢索指定範圍內的卡片。\n' +
+            await channel.send('指令說明：由該玩家的牌堆中檢索指定範圍內的卡片。未填寫數量則默認為1。\n' +
                 '\t※ 若該玩家的牌堆沒有檢索範圍所聲稱的卡片，則不會抽取該卡片。使用此項指令請仔細確認檢索範圍有沒有寫錯。\n' +
                 '\t※ Ex: 若頭痛鯊的牌堆沒有R0, R1, R2，則上述指令只會從 4, 5, 6, 10, 11, 12 之中，隨機檢索2張。')
         elif msg[1] == 'explore':
@@ -889,7 +923,7 @@ async def help(content, channel):
         elif msg[1] == 'gacha':
             await channel.send('指令格式：.gacha (1~50)')
             await channel.send('指令範例：.gacha 10')
-            await channel.send('指令說明：轉蛋。不填入次數默認為1。UR機率3%、SSR機率17%、R機率80%。10連抽的第10抽必定為SSR以上稀有度。')
+            await channel.send('指令說明：轉蛋。不填入次數默認為1。UR機率6%、SSR機率17%、R機率77%。10連抽的第10抽必定為SSR以上稀有度。')
         elif msg[1] == 'save':
             await channel.send('指令格式：.save')
             await channel.send('指令範例：.save')

@@ -3,6 +3,7 @@ import random
 import datetime as dt
 import shutil
 import os
+from collections import Counter
 
 import utility as utils
 import filehandler as fh
@@ -405,24 +406,42 @@ def draw_from_deck(player, count=1):
 # .search count [cards]
 def search_from_deck(player, count, cards):
     if '張' not in count:
-        return ('Error', '檢索數量需寫"X張"，例如：8張')
-    
-    count = count.replace('張', '')
-    count = utils.int_parser(count, error=True)
+        cards = [count] + cards
+        count = 1
+        # return ('Error', '檢索數量需寫"X張"，例如：8張')
+    else:
+        count = count.replace('張', '')
+        count = utils.int_parser(count, error=True)
 
     if count <= 0:
         return ('Error', '檢索數量必須為正整數')
 
+    result_list = []
+    counter = Counter(player.deck[player.deck_pos:])
     card_list = utils.int_list_parser(cards)
     
     filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
-    result_list = random.sample(filt_list, min(len(filt_list), count))
+    for item in filt_list:
+        result_list += ([item] * counter[item])
+
+    result_list = random.sample(result_list, min(len(result_list), count))
 
     player.deck.reverse()
     for result in result_list:
         player.deck.remove(result)
     player.deck.reverse()
 
+    return ('Correct', result_list)
+
+# .count name [cards]
+def count_from_deck(player, cards):
+    if (len(cards) == 0) or (cards[0] == "all"):
+        return ('Info', f'{player.name}的牌堆有 {len(player.deck) - player.deck_pos} 張卡片。')
+    
+    counter = Counter(player.deck[player.deck_pos:])
+    card_list = set(utils.int_list_parser(cards))
+    filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
+    result_list = dict(map(lambda x: (x, counter[x]) if x in filt_list else (x, 0), card_list))
     return ('Correct', result_list)
 
 # .explore name

@@ -28,6 +28,7 @@ client_command = {
     'deck': client.deck_info,
     'choose': client.choose,
     'shuffle': client.shuffle,
+    'count': client.count_cards,
     'keep': client.keep,
     'draw': client.draw,
     'search': client.search,
@@ -58,6 +59,7 @@ admin_command = {
 }
 
 ########
+#bot = discord.Client(intents=discord.Intents.default())
 bot = discord.Client()
 
 @bot.event

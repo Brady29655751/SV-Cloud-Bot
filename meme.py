@@ -11,7 +11,8 @@ meme_dict = {}
 emoji_dict = {}
 emoji_translate = {
   'wait what wow': '.think goldship stock',
-  '.big bruh': '.rage 10 rage 3 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage good rage good rage 3 good rage 2 next rage 3 good 3 rage 4 good rage 2 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 4 good rage 3 good rage good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 10 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage 3 good rage 3 good rage 2 next rage 2 good 5 rage 2 good 2 rage 2 next rage 10 rage 3'
+  '.big bruh': '.rage 10 rage 3 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage good rage good rage 3 good rage 2 next rage 3 good 3 rage 4 good rage 2 next rage 4 good rage 5 good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 4 good rage 3 good rage good rage 2 next rage 2 good 5 rage good rage good rage 2 next rage 10 good rage 2 next rage 2 good 5 rage 3 good rage 2 next rage 2 good rage 3 good rage 3 good rage 2 next rage 2 good 5 rage 2 good 2 rage 2 next rage 10 rage 3',
+  '.日指活': '.蕉 next 刃 next 播',
 }
 
 garden_id = os.environ['garden_id']
@@ -47,6 +48,7 @@ def get_meme(content):
     
     content = content.lower()
     key = content.strip('!！')
+    emoji = key.split()[0]
     if key == 'meme list':
         ret['message'] = f'meme總表：\n{[x for x in meme_dict]}'
     elif key == '色圖':
@@ -58,6 +60,8 @@ def get_meme(content):
     elif key in meme_dict:
         path = os.path.join(path, meme_dict[key])
         ret['file'] = discord.File(path)
+    elif (emoji in emoji_dict) or (('.'+ key) in emoji_translate):
+        ret['message'] = get_emoji('.' + key)['message']
     else:
         ret['status'] = False
     return ret
@@ -111,6 +115,11 @@ def get_emoji(content):
 
 async def response(content, channel):
     if "<@985566260555300934>" in content:
+        if content.endswith('？') or content.endswith('?'):
+            ans = ['是', '對阿', '爽啦', '沒有', '不要瞎掰好嗎', '不然要怎樣', '不知道欸', '懶得理你', emoji_dict['bruh']]
+            rans = random.choice(ans)
+            await channel.send(rans)
+            return True
         await channel.send(emoji_dict['what'])
         return True
 

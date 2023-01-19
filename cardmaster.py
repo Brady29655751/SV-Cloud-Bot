@@ -195,7 +195,7 @@ def search_card(name, option='name'):
                     elif operator == 'or':
                         filt_list = filt_list | new_list
                     else:
-                        return None
+                        return []
 
             filt_list = list(filt_list)
             if filt_list:
@@ -204,7 +204,7 @@ def search_card(name, option='name'):
                 elif option == 'filter':
                     filt_list.sort(key=lambda x: x.pack * 10 + x.craft)
             return filt_list
-    return None
+    return []
 
 def filt_card(card_list, label, compare, target):
     label_list = [
