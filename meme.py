@@ -48,6 +48,10 @@ def get_meme(content):
     
     content = content.lower()
     key = content.strip('!！')
+    if len(key) == 0:
+        ret['status'] = False
+        return ret
+
     emoji = key.split()[0]
     if key == 'meme list':
         ret['message'] = f'meme總表：\n{[x for x in meme_dict]}'
