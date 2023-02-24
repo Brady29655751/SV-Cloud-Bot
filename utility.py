@@ -55,15 +55,26 @@ def int_parser(string, error=False):
             return False
     return num
 
-def int_list_parser(string_list, error=False, use_list_reader=False):
+def int_list_parser(string_list, error=False, use_list_reader=False, unique=False):
     if use_list_reader:
         string_list = list_reader(string_list)    
-    result = [int_parser(x, error) for x in string_list]
-    if error:
-        for r in result:
-            if isinstance(r, bool) and not r:
-                return False
-    return result
+
+    result = []
+    for r in string_list:
+        if "-" in r:
+            int_range = r.split("-")
+            if len(int_range) == 2:
+                start = int_parser(int_range[0], True)
+                stop = int_parser(int_range[1], True)
+                if is_parsed_int(start) and is_parsed_int(stop) and (0 <= (stop - start) <= 1000):
+                    result.extend(range(start, stop + 1))
+                    continue
+
+        parsed_int = int_parser(r, error)
+        if error and not is_parsed_int(parsed_int):
+            return False
+        result.append(parsed_int)
+    return result if not unique else list(set(result))
 
 def list_reader(list_repr):
     content = list_repr.replace('[', '').replace(']', '').replace(', ', ' ').replace(',',' ')

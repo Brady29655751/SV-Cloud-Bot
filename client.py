@@ -175,11 +175,12 @@ async def battle(content, channel):
 
 
 async def dice(content, channel):
-    msg = content.replace('.dice', '')
-    msg = msg.split('d') if 'd' in msg else msg.split('D')
-    if len(msg) != 2:
+    msg = content.replace('.dice', '').split(' ')[1:]
+    if (len(msg) == 0) or (('d' not in msg[0]) and ('D' not in msg[0])):
         await channel.send('擲骰格式錯誤')
         return
+
+    msg = msg[0].split('d') if 'd' in msg[0] else msg[0].split('D')
 
     times = msg[0]
     dice = msg[1]
@@ -491,6 +492,8 @@ async def add(content, channel):
 
     status = sv.add_deck(player, cards)
     if status[0] == 'Correct':
+        if cards[0] in ['top', 'bottom']:
+            cards = cards[1:]
         await channel.send(f'{player.name}已新增下列卡片進入牌堆：{cards}')
     elif status[0] == 'Error':
         await channel.send(f'{status[1]}')
@@ -873,7 +876,8 @@ async def help(content, channel):
         elif msg[1] == 'add':
             await channel.send('指令格式：.add 玩家名字 新增卡片1 (新增卡片2) (新增卡片3) ...')
             await channel.send('指令範例：.add 頭痛鯊 41 R7 R8 42 43 R9')
-            await channel.send('指令說明：增加指定的卡片到該玩家的牌堆中，隨後進行1次洗牌。')
+            await channel.send('指令說明：增加指定的卡片到該玩家的牌堆中，隨後進行1次洗牌。\n' + 
+                '\t※ 若新增卡片1填寫top或bottom，則會增加到牌堆的最上方（最下方），且不進行洗牌。')
         elif msg[1] == 'substitute':
             await channel.send('指令格式：.substitute 玩家名字 置換卡片1 (置換卡片2) (置換卡片3) ...')
             await channel.send('指令範例：.substitute 頭痛鯊 41 R7 R8 42 43 R9')

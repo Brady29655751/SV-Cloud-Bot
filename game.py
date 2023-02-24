@@ -418,7 +418,7 @@ def search_from_deck(player, count, cards):
 
     result_list = []
     counter = Counter(player.deck[player.deck_pos:])
-    card_list = utils.int_list_parser(cards)
+    card_list = utils.int_list_parser(cards, unique=True)
     
     filt_list = list(filter(lambda x: x in player.deck[player.deck_pos:], card_list))
     for item in filt_list:
@@ -452,11 +452,19 @@ def explore_from_deck(player, count=1):
 
 # .add name [cards]
 def add_deck(player, cards):
-    add_deck = utils.int_list_parser(cards)
-    
     old_deck = player.deck[0 : player.deck_pos]
-    
     new_deck = player.deck[player.deck_pos:]
+
+    if (cards[0] == 'top'):
+        add_deck = utils.int_list_parser(cards[1:])
+        player.deck = old_deck + add_deck + new_deck
+        return ('Correct', player.deck)
+    elif (cards[0] == 'bottom'):
+        add_deck = utils.int_list_parser(cards[1:])
+        player.deck = player.deck + add_deck
+        return ('Correct', player.deck)
+
+    add_deck = utils.int_list_parser(cards)
     new_deck.extend(add_deck)
     random.shuffle(new_deck)
 
