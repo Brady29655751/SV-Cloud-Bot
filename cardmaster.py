@@ -94,7 +94,7 @@ class Card:
         count = db.pack_count
         return ((self.pack == 0) or ((self.pack not in range(1,4)) and (self.pack in range(count - 5, count))))
 
-    def is_in_2pick(self, pack_list=[(db.pack_count - 4 + i) for i in range(4)]):
+    def is_in_2pick(self, pack_list=[(db.pack_count - 3 + i) for i in range(3)]):
         if self.pack == 0:
             card_list = [
                 100010001, 100010002, 100010005,

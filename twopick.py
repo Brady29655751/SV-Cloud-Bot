@@ -53,9 +53,9 @@ def set_pick(player, pick):
     count = len(player.deck)
     if (count >= 30) or (not pick[0]) or (not pick[1]):
         return
-    sv.add_deck(player, [count+1, count+2])
-    sv.modify_deck_effect(player, 'add', pick[0], [count+1])
-    sv.modify_deck_effect(player, 'add', pick[1], [count+2])
+    sv.add_deck(player, pick)
+    sv.modify_deck_effect(player, 'add', str(count+1) + "號牌", pick[0])
+    sv.modify_deck_effect(player, 'add', str(count+2) + "號牌", pick[1])
     return
 
 
