@@ -19,7 +19,7 @@ bot = None
 #######
 # bot functions
 
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=2)
 async def auto_save():
     global last_save_time
     if not auto_save.current_loop:

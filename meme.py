@@ -8,6 +8,7 @@ import filehandler as fh
 meme_dir = os.path.join('.', 'meme')
 
 meme_dict = {}
+mygo_dict = {}
 emoji_dict = {}
 emoji_translate = {
   'wait what wow': '.think goldship stock',
@@ -29,10 +30,11 @@ def init_dict(filename, target_dict):
 async def init_meme(bot):
     global meme_dict, emoji_dict, garden, garden_id
     init_dict('meme.csv', meme_dict)
+    init_dict('mygo.csv', mygo_dict)
     init_dict('emoji.csv', emoji_dict)
     garden_channel = bot.get_channel(int(garden_id))
-    garden = await garden_channel.history(limit=300).flatten()
-    garden = [x for x in garden if (x.attachments) and (x.author != bot.user)]
+    garden_history = [g async for g in garden_channel.history(limit=300)]
+    garden = [x for x in garden_history if (x.attachments) and (x.author != bot.user)]
 
 def get_meme(content):
     global meme_dict, meme_dir
@@ -49,21 +51,27 @@ def get_meme(content):
     content = content.lower()
     key = content.strip('!！')
     if len(key) == 0:
-        ret['status'] = False
+        ret['status'] = False  
         return ret
 
     emoji = key.split()[0]
     if key == 'meme list':
         ret['message'] = f'meme總表：\n{[x for x in meme_dict]}'
+    elif key == 'mygo list':
+        ret['message'] = f'mygo總表：\n{[x for x in mygo_dict]}'
     elif key == '色圖':
         garden_msg = random.choice(garden)
         garden_pic = random.choice(garden_msg.attachments)
         ret['message'] = f'{garden_pic.url}'
+    elif key == "mygo":
+        ret['message'] = random.choice(list(mygo_dict.values()))
     elif key == '寄':
         ret['message'] = emoji_dict['die']
     elif key in meme_dict:
         path = os.path.join(path, meme_dict[key])
         ret['file'] = discord.File(path)
+    elif key in mygo_dict:
+        ret['message'] = mygo_dict[key]
     elif (emoji in emoji_dict) or (('.'+ key) in emoji_translate):
         ret['message'] = get_emoji('.' + key)['message']
     else:
